@@ -111,14 +111,24 @@ export function SettingsPage() {
 
       {/* Theme Selection Modal */}
       {isThemeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-surface p-6 rounded-2xl max-w-sm w-full border border-outline-variant/30 shadow-2xl">
-            <h3 className="font-headline-md text-headline-md font-semibold text-on-surface mb-4">Choose Theme</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setIsThemeModalOpen(false)}>
+          <div className="bg-surface p-6 rounded-2xl max-w-[24rem] w-full border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-sm mb-4">
+              <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">Choose Theme</h3>
+              <button
+                type="button"
+                aria-label="Close"
+                className="shrink-0 flex items-center justify-center p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
+                onClick={() => setIsThemeModalOpen(false)}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
             <div className="space-y-2">
               {(['system', 'dark', 'light'] as ThemeType[]).map((t) => (
                 <button
                   key={t}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
+                  className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors cursor-pointer ${
                     theme === t ? 'bg-primary-container/20 text-primary font-medium border border-primary/30' : 'hover:bg-surface-container text-on-surface'
                   }`}
                   onClick={() => {
@@ -132,7 +142,7 @@ export function SettingsPage() {
               ))}
             </div>
             <button
-              className="mt-6 w-full py-2.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-medium"
+              className="mt-6 w-full py-2.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-medium cursor-pointer"
               onClick={() => setIsThemeModalOpen(false)}
             >
               Cancel
@@ -143,14 +153,24 @@ export function SettingsPage() {
 
       {/* Font Size Selection Modal */}
       {isFontSizeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-surface p-6 rounded-2xl max-w-sm w-full border border-outline-variant/30 shadow-2xl">
-            <h3 className="font-headline-md text-headline-md font-semibold text-on-surface mb-4">Font Size</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setIsFontSizeModalOpen(false)}>
+          <div className="bg-surface p-6 rounded-2xl max-w-[24rem] w-full border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-sm mb-4">
+              <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">Font Size</h3>
+              <button
+                type="button"
+                aria-label="Close"
+                className="shrink-0 flex items-center justify-center p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
+                onClick={() => setIsFontSizeModalOpen(false)}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
             <div className="space-y-2">
               {(['small', 'default', 'large'] as FontSize[]).map((s) => (
                 <button
                   key={s}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors ${
+                  className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors cursor-pointer ${
                     fontSize === s ? 'bg-primary-container/20 text-primary font-medium border border-primary/30' : 'hover:bg-surface-container text-on-surface'
                   }`}
                   onClick={() => {
@@ -164,7 +184,7 @@ export function SettingsPage() {
               ))}
             </div>
             <button
-              className="mt-6 w-full py-2.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-medium"
+              className="mt-6 w-full py-2.5 rounded-xl bg-surface-container-high text-on-surface hover:bg-surface-container-highest transition-colors font-medium cursor-pointer"
               onClick={() => setIsFontSizeModalOpen(false)}
             >
               Cancel
@@ -175,14 +195,24 @@ export function SettingsPage() {
 
       {/* Privacy Modal */}
       {isPrivacyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-surface p-6 rounded-2xl max-w-md w-full border border-outline-variant/30 shadow-2xl">
-            <h3 className="font-headline-md text-headline-md font-semibold text-on-surface mb-2">Privacy Policy</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setIsPrivacyModalOpen(false)}>
+          <div className="bg-surface p-6 rounded-2xl max-w-[28rem] w-full border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-sm mb-2">
+              <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">Privacy Policy</h3>
+              <button
+                type="button"
+                aria-label="Close"
+                className="shrink-0 flex items-center justify-center p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
+                onClick={() => setIsPrivacyModalOpen(false)}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
             <p className="text-body-md text-on-surface-variant leading-relaxed mb-4">
               LocalNote is 100% offline-first. All your notes, checklists, events, folders, and attachments stay strictly on your device inside a local SQLite database. No tracking, analytics, or external server calls are made.
             </p>
             <button
-              className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity"
+              className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity cursor-pointer"
               onClick={() => setIsPrivacyModalOpen(false)}
             >
               Close
@@ -193,9 +223,19 @@ export function SettingsPage() {
 
       {/* Credits Modal */}
       {isCreditsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-surface p-6 rounded-2xl max-w-md w-full border border-outline-variant/30 shadow-2xl">
-            <h3 className="font-headline-md text-headline-md font-semibold text-on-surface mb-2">Credits & Licenses</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={() => setIsCreditsModalOpen(false)}>
+          <div className="bg-surface p-6 rounded-2xl max-w-[28rem] w-full border border-outline-variant/30 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-sm mb-2">
+              <h3 className="font-headline-md text-headline-md font-semibold text-on-surface">Credits & Licenses</h3>
+              <button
+                type="button"
+                aria-label="Close"
+                className="shrink-0 flex items-center justify-center p-1.5 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
+                onClick={() => setIsCreditsModalOpen(false)}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
             <div className="text-body-md text-on-surface-variant space-y-2 mb-4">
               <p>Built with React 19, TypeScript, Vite, Tailwind CSS, and SQLite.</p>
               <p>Editor engine: Tiptap & ProseMirror.</p>
@@ -203,7 +243,7 @@ export function SettingsPage() {
               <p>Typography: Inter by Rasmus Andersson and JetBrains Mono.</p>
             </div>
             <button
-              className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity"
+              className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity cursor-pointer"
               onClick={() => setIsCreditsModalOpen(false)}
             >
               Close

@@ -227,7 +227,7 @@ export function BackupPage() {
               <span className="material-symbols-outlined text-primary">download</span>
               <h2 className="font-body-lg text-body-lg font-bold text-on-background">Generate Backup</h2>
             </div>
-            <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+            <p className="font-body-md text-body-md text-on-surface-variant max-w-[42rem]">
               Create a secure, local file containing all your notes, folders, and calendar events. This file can be used to restore your data on this device or transfer it to another device securely.
             </p>
             <button
