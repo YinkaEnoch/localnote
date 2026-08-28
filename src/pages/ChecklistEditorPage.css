@@ -1,0 +1,44 @@
+.rounded-checkbox {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-outline, #908fa0);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.rounded-checkbox:checked {
+    background-color: var(--color-primary, #c0c1ff);
+    border-color: var(--color-primary, #c0c1ff);
+}
+
+.rounded-checkbox:checked::after {
+    content: 'check';
+    font-family: 'Material Symbols Outlined';
+    color: var(--color-on-primary, #1000a9);
+    font-size: 16px;
+    font-variation-settings: 'FILL' 1, 'wght' 700;
+    position: absolute;
+}
+
+.checklist-item-checked input[type="text"] {
+    text-decoration: line-through;
+    color: var(--color-on-surface-variant, #c7c4d7);
+}
+
+.drag-handle {
+    cursor: grab;
+}
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}

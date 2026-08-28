@@ -1,0 +1,55 @@
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.ProseMirror {
+  min-height: 300px;
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-on-surface-variant, #c7c4d7);
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror blockquote {
+  border-left-width: 4px;
+  border-color: var(--color-primary, #c0c1ff);
+  padding-left: var(--spacing-md, 16px);
+  margin-top: var(--spacing-lg, 24px);
+  margin-bottom: var(--spacing-lg, 24px);
+  font-style: italic;
+  color: var(--color-on-surface-variant, #c7c4d7);
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: var(--spacing-lg, 24px);
+  margin-bottom: 1rem;
+}
+
+.ProseMirror ul li {
+  margin-bottom: 0.5rem;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: var(--spacing-lg, 24px);
+  margin-bottom: 1rem;
+}
+
+.ProseMirror ol li {
+  margin-bottom: 0.5rem;
+}
+
+.ProseMirror a {
+  color: var(--color-primary, #c0c1ff);
+  text-decoration: underline;
+}

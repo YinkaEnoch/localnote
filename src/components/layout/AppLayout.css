@@ -1,0 +1,30 @@
+.app-layout {
+  display: flex;
+  flex-direction: row;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+
+@media (max-width: 767px) {
+  .app-content {
+    /* Leave space for bottom nav on mobile */
+    padding-bottom: 72px;
+  }
+}
