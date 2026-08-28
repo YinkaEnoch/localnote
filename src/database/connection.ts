@@ -17,11 +17,13 @@ export const getDatabase = async (): Promise<SQLiteDBConnection> => {
       const platform = Capacitor.getPlatform();
 
       if (platform === 'web') {
-        const jeepEl = document.querySelector('jeep-sqlite');
-        if (jeepEl != null) {
-          await customElements.whenDefined('jeep-sqlite');
-          await sqlite.initWebStore();
+        let jeepEl = document.querySelector('jeep-sqlite');
+        if (!jeepEl) {
+          jeepEl = document.createElement('jeep-sqlite');
+          document.body.appendChild(jeepEl);
         }
+        await customElements.whenDefined('jeep-sqlite');
+        await sqlite.initWebStore();
       }
 
       const check = await sqlite.checkConnectionsConsistency();
