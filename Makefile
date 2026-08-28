@@ -1,8 +1,10 @@
 install:
-	adb install -r /home/thinkpad-t480s/CodeArena/App/bible-reader/app-debug.apk
+	adb install -r /home/thinkpad-t480s/CodeArena/App/local_note/android/app/build/outputs/apk/debug/app-debug.apk
 
 uninstall:
-	adb uninstall com.biblereader.app
+	adb uninstall com.localnote.app
 
 disconnect:
 	adb disconnect
+
+
