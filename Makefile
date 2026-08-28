@@ -6,5 +6,10 @@ uninstall:
 
 disconnect:
 	adb disconnect
+  
+build_app:
+	npm run build
+	npx cap sync
 
-
+show_logs:
+	adb logcat

@@ -39,7 +39,7 @@ export const getDatabase = async (): Promise<SQLiteDBConnection> => {
 
       // WAL journal mode on native for better concurrency/performance
       if (platform !== 'web') {
-        await dbConnection.execute('PRAGMA journal_mode = WAL;');
+        await dbConnection.query('PRAGMA journal_mode = WAL;');
       }
 
       return dbConnection;

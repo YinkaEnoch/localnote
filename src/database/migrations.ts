@@ -84,7 +84,8 @@ const MIGRATIONS = [
 ];
 
 export const runMigrations = async (db: SQLiteDBConnection): Promise<void> => {
-  await db.execute('CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);');
+  // transaction: false — avoid nested transactions; this is a simple idempotent DDL
+  await db.execute('CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);', false);
   
   const versionRes = await db.query('SELECT version FROM schema_version LIMIT 1;');
   let currentVersion = 0;
@@ -92,7 +93,7 @@ export const runMigrations = async (db: SQLiteDBConnection): Promise<void> => {
   if (versionRes.values && versionRes.values.length > 0) {
     currentVersion = versionRes.values[0].version;
   } else {
-    await db.run('INSERT INTO schema_version (version) VALUES (0);');
+    await db.run('INSERT INTO schema_version (version) VALUES (0);', undefined, false);
   }
 
   const pendingMigrations = MIGRATIONS.filter(m => m.version > currentVersion).sort((a, b) => a.version - b.version);
@@ -103,14 +104,16 @@ export const runMigrations = async (db: SQLiteDBConnection): Promise<void> => {
 
   for (const migration of pendingMigrations) {
     try {
-      await db.execute('BEGIN TRANSACTION;');
-      for (const statement of migration.up) {
-        await db.execute(statement);
-      }
-      await db.run('UPDATE schema_version SET version = ?;', [migration.version]);
-      await db.execute('COMMIT;');
+      // Combine all DDL statements + version update into a single execute() call.
+      // The plugin's execute() wraps the batch in one transaction automatically
+      // (transaction defaults to true). Do NOT manually call BEGIN/COMMIT — that
+      // causes nested transaction errors on Android's native SQLite.
+      const allStatements = [
+        ...migration.up,
+        `UPDATE schema_version SET version = ${migration.version};`,
+      ].join('\n');
+      await db.execute(allStatements);
     } catch (error) {
-      await db.execute('ROLLBACK;');
       console.error(`Migration v${migration.version} failed:`, error);
       throw error;
     }
