@@ -12,9 +12,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "cap:sync": "cap sync",
-    "cap:android": "cap open android",
-    "cap:ios": "cap open ios"
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "build:android":"JAVA_HOME=$HOME/.bubblewrap/jdk/jdk-17.0.11+9 ./android/gradlew -p android assembleDebug"
   },
   "author": "Yinka Enoch Adedokun <adedokunyinkaenoch@gmail.com> (https://github.com/yinkaenoch)",
   "license": "ISC",
@@ -44,6 +45,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "6.2.1",
     "@eslint/js": "^9.25.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
