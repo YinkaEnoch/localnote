@@ -13,6 +13,35 @@ const OFFSET_MINUTES: Record<ReminderOffset, number> = {
   '1day': 1440,
 };
 
+/** Notification channel used for events configured with the "long" alarm. */
+export const LONG_ALARM_CHANNEL_ID = 'long_alarm';
+let longAlarmChannelReady = false;
+
+/**
+ * Creates (once) the high-importance notification channel wired to the bundled
+ * `long_alarm.wav` raw resource. Android 8+ plays whatever sound the channel
+ * is configured with, so routing a notification to this channel is what gives
+ * it the long alarm sound. Returns false if unavailable (web).
+ */
+export const ensureLongAlarmChannel = async (): Promise<boolean> => {
+  if (Capacitor.getPlatform() === 'web') return false;
+  if (longAlarmChannelReady) return true;
+  try {
+    await LocalNotifications.createChannel({
+      id: LONG_ALARM_CHANNEL_ID,
+      name: 'Event alarms',
+      description: 'Events using the long alarm sound',
+      importance: 4, // IMPORTANCE_HIGH — needed for the sound to actually play
+      sound: 'long_alarm',
+    });
+    longAlarmChannelReady = true;
+    return true;
+  } catch (err) {
+    console.error('Failed to create long alarm channel:', err);
+    return false;
+  }
+};
+
 /** Stable int32 notification id derived from the event id (uuid). */
 const notificationIdFor = (eventId: string): number => {
   let hash = 0;
@@ -54,6 +83,19 @@ export const scheduleEventReminder = async (event: Event): Promise<number | null
   if (!granted) return null;
 
   const notificationId = notificationIdFor(event.id);
+
+  // If this event is configured for the long alarm sound, ensure the custom
+  // channel exists and route the notification through it (Android 8+ plays the
+  // channel's sound, so this is what produces the longer alarm ringtone).
+  let channelId: string | undefined;
+  if (event.sound === 'long') {
+    if (await ensureLongAlarmChannel()) {
+      channelId = LONG_ALARM_CHANNEL_ID;
+    } else {
+      console.warn('[reminder] long alarm channel unavailable; using default sound.');
+    }
+  }
+
   await LocalNotifications.schedule({
     notifications: [
       {
@@ -68,6 +110,7 @@ export const scheduleEventReminder = async (event: Event): Promise<number | null
         schedule: { at: remindAt, allowWhileIdle: true },
         smallIcon: 'ic_launcher',
         largeIcon: 'ic_launcher_round',
+        channelId,
       },
     ],
   });

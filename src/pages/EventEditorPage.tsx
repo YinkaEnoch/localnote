@@ -4,7 +4,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
-import type { Event, NoteColor, ReminderOffset } from '@/types/models';
+import type { Event, NoteColor, ReminderOffset, EventSound } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { scheduleEventReminder, cancelEventReminder } from '@/services/reminderService';
 
@@ -25,6 +25,7 @@ export function EventEditorPage() {
   const [endDate, setEndDate] = useState(`${initialDateStr}T10:00`);
   
   const [reminder, setReminder] = useState<ReminderOffset>('10min');
+  const [sound, setSound] = useState<EventSound>('default');
   const [description, setDescription] = useState('');
   const [folderId, setFolderId] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
@@ -64,6 +65,7 @@ export function EventEditorPage() {
         setStartDate(e.startDate.slice(0, 16));
         setEndDate(e.endDate ? e.endDate.slice(0, 16) : `${e.startDate.slice(0, 10)}T10:00`);
         setReminder(e.reminder);
+        setSound(e.sound || 'default');
         setDescription(e.description || '');
         setFolderId(e.folderId);
       }
@@ -84,6 +86,7 @@ export function EventEditorPage() {
       endDate: endDate ? new Date(endDate).toISOString() : null,
       allDay,
       reminder,
+      sound,
       description,
       links: JSON.stringify([]),
       color,
@@ -363,6 +366,36 @@ export function EventEditorPage() {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="h-px w-full bg-surface-variant" />
+
+        {/* Alarm Sound Section — optional longer ringtone for the reminder */}
+        <div className="flex items-center gap-md py-md px-2">
+          <span className="material-symbols-outlined text-on-surface-variant">campaign</span>
+          <div className="flex-1">
+            <span className="block font-body-md text-body-md text-on-background">Alarm sound</span>
+          </div>
+          <div className="flex gap-xs bg-surface-container-high rounded-full p-1">
+            <button
+              type="button"
+              className={`px-3 py-1.5 rounded-full font-label-sm text-label-sm transition-colors ${
+                sound === 'default' ? 'bg-primary text-on-primary font-medium' : 'text-on-surface-variant'
+              }`}
+              onClick={() => setSound('default')}
+            >
+              Default
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 rounded-full font-label-sm text-label-sm transition-colors ${
+                sound === 'long' ? 'bg-primary text-on-primary font-medium' : 'text-on-surface-variant'
+              }`}
+              onClick={() => setSound('long')}
+            >
+              Long alarm
+            </button>
+          </div>
         </div>
 
         <div className="h-px w-full bg-surface-variant" />

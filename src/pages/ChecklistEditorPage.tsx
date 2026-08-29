@@ -269,7 +269,7 @@ export function ChecklistEditorPage() {
             ))}
 
             {/* Add Item Row */}
-            <form onSubmit={handleAddItem} className="flex items-center gap-md p-unit mt-sm border-t border-surface-container-high pt-md">
+            <form onSubmit={handleAddItem} className="flex items-center gap-md p-unit mt-sm mb-sm border-t border-b border-surface-container-high pt-md">
               <div className="w-6 flex justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined">add</span>
               </div>

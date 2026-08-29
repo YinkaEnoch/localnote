@@ -80,6 +80,14 @@ const MIGRATIONS = [
       `CREATE INDEX IF NOT EXISTS idx_attachments_parent ON attachments(parent_id, parent_type);`,
       `CREATE INDEX IF NOT EXISTS idx_reminders_parent ON reminders(parent_id, parent_type);`
     ]
+  },
+  {
+    version: 2,
+    up: [
+      // Per-event reminder sound choice: 'default' (system) or 'long' (bundled
+      // long alarm loop). Existing rows keep 'default'.
+      `ALTER TABLE events ADD COLUMN sound TEXT NOT NULL DEFAULT 'default';`
+    ]
   }
 ];
 

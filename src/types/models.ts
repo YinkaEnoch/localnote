@@ -6,6 +6,7 @@ export type ThemeMode = 'dark' | 'light' | 'system';
 export type SortOption = 'updated' | 'created' | 'alphabetical';
 export type ReminderOffset = 'none' | '5min' | '10min' | '15min' | '30min' | '1hr' | '1day';
 export type SearchScope = 'all' | 'titles' | 'contents';
+export type EventSound = 'default' | 'long';
 
 export interface Note {
   id: string;
@@ -36,6 +37,7 @@ export interface Event {
   endDate: string | null;
   allDay: boolean;
   reminder: ReminderOffset;
+  sound: EventSound; // notification/alarm sound to use for the reminder
   description: string;
   links: string; // JSON array string
   color: NoteColor;

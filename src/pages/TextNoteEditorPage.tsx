@@ -87,6 +87,7 @@ export function TextNoteEditorPage() {
       endDate: null,
       allDay: false,
       reminder: '10min',
+      sound: 'default',
       description: plainText,
       links: JSON.stringify([]),
       color,

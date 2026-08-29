@@ -1,5 +1,5 @@
 import { getDatabase } from '../connection';
-import type { Event, SortOption, ReminderOffset, NoteColor } from '@/types/models';
+import type { Event, SortOption, ReminderOffset, EventSound, NoteColor } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
 
 interface EventRow {
@@ -9,6 +9,7 @@ interface EventRow {
   end_date: string | null;
   all_day: number;
   reminder: string;
+  sound: string;
   description: string;
   links: string;
   color: string;
@@ -24,6 +25,7 @@ const mapRowToEvent = (row: EventRow): Event => ({
   endDate: row.end_date,
   allDay: Boolean(row.all_day),
   reminder: row.reminder as ReminderOffset,
+  sound: (row.sound as EventSound) || 'default',
   description: row.description,
   links: row.links,
   color: row.color as NoteColor,
@@ -84,8 +86,8 @@ export class EventRepository {
     const now = new Date().toISOString();
 
     await db.run(
-      `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, description, links, color, folder_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, sound, description, links, color, folder_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         id,
         event.title,
@@ -93,6 +95,7 @@ export class EventRepository {
         event.endDate,
         event.allDay ? 1 : 0,
         event.reminder,
+        event.sound,
         event.description,
         event.links,
         event.color,
@@ -127,7 +130,7 @@ export class EventRepository {
 
     await db.run(
       `UPDATE events
-       SET title = ?, start_date = ?, end_date = ?, all_day = ?, reminder = ?, description = ?, links = ?, color = ?, folder_id = ?, updated_at = ?
+       SET title = ?, start_date = ?, end_date = ?, all_day = ?, reminder = ?, sound = ?, description = ?, links = ?, color = ?, folder_id = ?, updated_at = ?
        WHERE id = ?;`,
       [
         updated.title,
@@ -135,6 +138,7 @@ export class EventRepository {
         updated.endDate,
         updated.allDay ? 1 : 0,
         updated.reminder,
+        updated.sound,
         updated.description,
         updated.links,
         updated.color,
