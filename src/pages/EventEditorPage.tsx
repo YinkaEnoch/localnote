@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
@@ -30,6 +31,10 @@ export function EventEditorPage() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isReminderMenuOpen, setIsReminderMenuOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const reminderMenuRef = useRef<HTMLDivElement>(null);
+  useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
+  useClickOutside(reminderMenuRef, () => setIsReminderMenuOpen(false), isReminderMenuOpen);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -174,7 +179,7 @@ export function EventEditorPage() {
           >
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
           </button>
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
               aria-label="More options"
               className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors duration-200 text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
@@ -313,7 +318,7 @@ export function EventEditorPage() {
         <div className="h-px w-full bg-surface-variant" />
 
         {/* Reminder Section */}
-        <div className="relative">
+        <div className="relative" ref={reminderMenuRef}>
           <button
             type="button"
             className="flex items-center gap-md py-md text-left w-full hover:bg-surface-container-low rounded-lg transition-colors group px-2"

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -20,6 +21,8 @@ export function TextNoteEditorPage() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
 
   const editor = useEditor({
     extensions: [
@@ -124,7 +127,7 @@ export function TextNoteEditorPage() {
           <button onClick={handleSave} aria-label="Save note" className="text-primary hover:bg-surface-container transition-colors duration-200 rounded-full p-2">
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
           </button>
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button onClick={() => setMenuOpen(!menuOpen)} aria-label="More options" className="text-on-surface-variant hover:bg-surface-container transition-colors duration-200 rounded-full p-2">
               <span className="material-symbols-outlined">more_vert</span>
             </button>

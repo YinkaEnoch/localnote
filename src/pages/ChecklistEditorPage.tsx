@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNavigate, useParams } from 'react-router-dom';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { ChecklistRepository } from '@/database/repositories/ChecklistRepository';
@@ -18,6 +19,8 @@ export function ChecklistEditorPage() {
   const [newItemText, setNewItemText] = useState('');
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -164,7 +167,7 @@ export function ChecklistEditorPage() {
           >
             <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
           </button>
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
               aria-label="More options"
               className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors duration-200 text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
