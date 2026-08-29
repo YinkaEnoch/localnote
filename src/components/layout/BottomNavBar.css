@@ -17,12 +17,13 @@
 }
 
 .bottom-nav__item {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 6px 16px;
+  padding: 6px 2px;
   cursor: pointer;
   border: none;
   background: none;
@@ -37,7 +38,7 @@
 }
 
 .bottom-nav__icon-wrapper {
-  padding: 4px 20px;
+  padding: 4px 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,7 +47,7 @@
 }
 
 .bottom-nav__pill {
-  padding: 4px 20px;
+  padding: 4px 14px;
   display: flex;
   align-items: center;
   justify-content: center;

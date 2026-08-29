@@ -19,8 +19,15 @@ export function CalendarPage() {
       // but EventRepository doesn't have a getByMonth. We have getByDateRange.
       const year = currentMonth.getFullYear();
       const month = currentMonth.getMonth();
-      const startDate = new Date(year, month, 1).toISOString();
-      const endDate = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+      // Pad the range by a day on each side: events are stored as UTC ISO
+      // strings, so a local-time event can sit just outside the strict
+      // month boundary in UTC.
+      const rangeStart = new Date(year, month, 1);
+      rangeStart.setDate(rangeStart.getDate() - 1);
+      const rangeEnd = new Date(year, month + 1, 0, 23, 59, 59);
+      rangeEnd.setDate(rangeEnd.getDate() + 1);
+      const startDate = rangeStart.toISOString();
+      const endDate = rangeEnd.toISOString();
       
       const events = await EventRepository.getByDateRange(startDate, endDate);
       const notes = await NoteRepository.getAll();
@@ -74,9 +81,22 @@ export function CalendarPage() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  // Events are stored as UTC ISO strings; compare them to the selected day
+  // using LOCAL calendar dates (string-prefix matching breaks for any
+  // timezone ahead of UTC — the event would appear on the wrong day).
+  const isOnLocalDate = (isoString: string | undefined | null, date: Date): boolean => {
+    if (!isoString) return false;
+    const d = new Date(isoString);
+    return (
+      d.getFullYear() === date.getFullYear() &&
+      d.getMonth() === date.getMonth() &&
+      d.getDate() === date.getDate()
+    );
+  };
+
   const selectedDateStr = formatDateString(selectedDate);
-  const selectedEvents = monthEvents.filter(e => e.startDate.startsWith(selectedDateStr));
-  const selectedNotes = monthNotes.filter(n => n.eventDate?.startsWith(selectedDateStr));
+  const selectedEvents = monthEvents.filter(e => isOnLocalDate(e.startDate, selectedDate));
+  const selectedNotes = monthNotes.filter(n => isOnLocalDate(n.eventDate, selectedDate));
 
   const formatTime = (isoString: string) => {
     const d = new Date(isoString);
@@ -113,9 +133,8 @@ export function CalendarPage() {
                 return <div key={`empty-${i}`} className="day empty-day" />;
               }
               
-              const dateStr = formatDateString(date);
-              const hasEvents = monthEvents.some(e => e.startDate.startsWith(dateStr));
-              const hasNotes = monthNotes.some(n => n.eventDate?.startsWith(dateStr));
+              const hasEvents = monthEvents.some(e => isOnLocalDate(e.startDate, date));
+              const hasNotes = monthNotes.some(n => isOnLocalDate(n.eventDate, date));
               const isSelected = isSameDay(date, selectedDate);
               
               return (

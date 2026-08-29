@@ -6,6 +6,7 @@ import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import type { Event, NoteColor, ReminderOffset } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
+import { scheduleEventReminder, cancelEventReminder } from '@/services/reminderService';
 
 export function EventEditorPage() {
   const { id } = useParams<{ id?: string }>();
@@ -90,11 +91,14 @@ export function EventEditorPage() {
     };
 
     try {
+      let savedEvent: Event;
       if (!isNew && id) {
-        await EventRepository.update(id, payload);
+        savedEvent = await EventRepository.update(id, payload);
       } else {
-        await EventRepository.create(payload);
+        savedEvent = await EventRepository.create(payload);
       }
+      // Refresh the scheduled reminder notification for this event.
+      await scheduleEventReminder(savedEvent);
       navigate(-1);
     } catch (err) {
       console.error('Failed to save event:', err);
@@ -103,6 +107,7 @@ export function EventEditorPage() {
 
   const handleDelete = async () => {
     if (event && window.confirm('Are you sure you want to delete this event?')) {
+      await cancelEventReminder(event.id);
       await EventRepository.remove(event.id);
       navigate(-1);
     }
