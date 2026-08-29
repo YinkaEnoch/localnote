@@ -97,11 +97,17 @@ export function EventEditorPage() {
       } else {
         savedEvent = await EventRepository.create(payload);
       }
-      // Refresh the scheduled reminder notification for this event.
-      await scheduleEventReminder(savedEvent);
+      console.log('[EventEditor] saved event:', savedEvent.id, 'start:', savedEvent.startDate, 'reminder:', savedEvent.reminder);
+      // Reminder scheduling must NOT block saving/navigation — a notification
+      // plugin hiccup (permission dialog, exact-alarm denial on some ROMs)
+      // should only be logged, never break the persist or show a false error.
+      scheduleEventReminder(savedEvent)
+        .then((notifId) => console.log('[EventEditor] reminder scheduled, notificationId:', notifId))
+        .catch((err) => console.error('[EventEditor] reminder scheduling failed (event still saved):', err));
       navigate(-1);
     } catch (err) {
-      console.error('Failed to save event:', err);
+      console.error('[EventEditor] FAILED to save event:', err);
+      alert(`Failed to save event: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 

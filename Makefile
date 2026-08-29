@@ -13,3 +13,6 @@ build_app:
 
 show_logs:
 	adb logcat
+
+show_capacitor_logs:
+	adb logcat --pid=$(adb shell pidof com.localnote.app) | grep -E "Capacitor/Console|Capacitor:"
