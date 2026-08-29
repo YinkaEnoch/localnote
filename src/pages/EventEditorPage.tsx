@@ -393,7 +393,7 @@ export function EventEditorPage() {
             {event?.createdAt ? `Created ${new Date(event.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Draft Event'}
           </span>
         </div>
-        <div className="flex justify-around items-center h-16 px-gutter pb-safe w-full max-w-[800px] mx-auto">
+        <div className="flex justify-around items-center h-16 px-gutter pb-safe w-full max-w-[800px] mx-auto text-base">
           {!isNew && (
             <>
               <button

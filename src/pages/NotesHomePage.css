@@ -258,49 +258,6 @@
   opacity: 0.5;
 }
 
-.fab {
-  position: fixed;
-  right: var(--space-gutter);
-  bottom: 100px;
-  z-index: 50;
-  width: 56px;
-  height: 56px;
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.1);
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, transform 0.1s;
-}
-
-@media (min-width: 768px) {
-  .fab {
-    display: none;
-  }
-}
-
-.fab:hover {
-  background-color: var(--color-primary-container);
-  color: var(--color-on-primary-container);
-}
-
-.fab:active {
-  transform: scale(0.95);
-}
-
-.fab:hover .icon {
-  transform: rotate(90deg);
-}
-
-.fab .icon {
-  font-size: 28px;
-  transition: transform 0.3s;
-}
-
 .empty-state {
   text-align: center;
   color: var(--color-on-surface-variant);

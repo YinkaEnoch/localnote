@@ -180,10 +180,6 @@ export function NotesHomePage() {
           )}
         </section>
       </main>
-
-      <div className="fab" onClick={() => setIsCreateMenuOpen(true)}>
-        <span className="material-symbols-outlined icon">add</span>
-      </div>
     </div>
   );
 }

@@ -96,10 +96,6 @@ export function FolderPage() {
           })}
         </div>
       </main>
-      
-      <button className="fp-fab" onClick={() => navigate(`/note/new?folderId=${folder.id}`)}>
-        <span className="material-symbols-outlined icon">add</span>
-      </button>
     </div>
   );
 }

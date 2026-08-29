@@ -104,7 +104,7 @@ export function EditFolderPage() {
 
         {!isNew && (
           <section>
-            <button className="efp-delete-btn" onClick={handleDelete}>
+            <button className="efp-delete-btn text-base" onClick={handleDelete}>
               <span className="material-symbols-outlined">delete</span>
               Delete Folder
             </button>

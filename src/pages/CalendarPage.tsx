@@ -193,7 +193,7 @@ export function CalendarPage() {
             )}
             
             <button 
-              className="add-event-btn" 
+              className="add-event-btn text-base" 
               onClick={() => navigate('/event/new', { state: { date: selectedDateStr }})}
             >
               <span className="material-symbols-outlined">add</span>
