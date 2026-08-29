@@ -37,7 +37,7 @@ const getSortClause = (sortBy: SortOption): string => {
     case 'created':
       return 'created_at DESC';
     case 'alphabetical':
-      return 'title ASC COLLATE NOCASE';
+      return 'title COLLATE NOCASE ASC';
     case 'updated':
     default:
       return 'updated_at DESC';
@@ -150,14 +150,14 @@ export class EventRepository {
   static async remove(id: string): Promise<void> {
     const db = await getDatabase();
     try {
-      await db.execute('BEGIN TRANSACTION;');
+      await db.execute('BEGIN TRANSACTION;', false);
       await db.run('UPDATE notes SET event_id = NULL WHERE event_id = ?;', [id]);
       await db.run('DELETE FROM attachments WHERE parent_id = ? AND parent_type = "event";', [id]);
       await db.run('DELETE FROM reminders WHERE parent_id = ? AND parent_type = "event";', [id]);
       await db.run('DELETE FROM events WHERE id = ?;', [id]);
-      await db.execute('COMMIT;');
+      await db.execute('COMMIT;', false);
     } catch (err) {
-      await db.execute('ROLLBACK;');
+      await db.execute('ROLLBACK;', false);
       throw err;
     }
   }

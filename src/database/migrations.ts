@@ -104,15 +104,15 @@ export const runMigrations = async (db: SQLiteDBConnection): Promise<void> => {
 
   for (const migration of pendingMigrations) {
     try {
-      // Combine all DDL statements + version update into a single execute() call.
-      // The plugin's execute() wraps the batch in one transaction automatically
-      // (transaction defaults to true). Do NOT manually call BEGIN/COMMIT — that
-      // causes nested transaction errors on Android's native SQLite.
-      const allStatements = [
-        ...migration.up,
-        `UPDATE schema_version SET version = ${migration.version};`,
-      ].join('\n');
-      await db.execute(allStatements);
+      // Execute each statement individually with the plugin's implicit
+      // transaction disabled. The plugin's execute() wraps the batch in its own
+      // BEGIN/COMMIT, and on the web platform (jeep-sqlite) issuing a
+      // multi-statement batch — or manual BEGIN/COMMIT — through it raises
+      // "cannot start a transaction within a transaction".
+      for (const statement of migration.up) {
+        await db.execute(statement, false);
+      }
+      await db.execute(`UPDATE schema_version SET version = ${migration.version};`, false);
     } catch (error) {
       console.error(`Migration v${migration.version} failed:`, error);
       throw error;

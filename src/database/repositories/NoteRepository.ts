@@ -53,7 +53,7 @@ const getSortClause = (sortBy: SortOption): string => {
     case 'created':
       return 'n.created_at DESC';
     case 'alphabetical':
-      return 'n.title ASC COLLATE NOCASE';
+      return 'n.title COLLATE NOCASE ASC';
     case 'updated':
     default:
       return 'n.updated_at DESC';
@@ -148,14 +148,14 @@ export class NoteRepository {
   static async remove(id: string): Promise<void> {
     const db = await getDatabase();
     try {
-      await db.execute('BEGIN TRANSACTION;');
+      await db.execute('BEGIN TRANSACTION;', false);
       await db.run('DELETE FROM checklist_items WHERE note_id = ?;', [id]);
       await db.run('DELETE FROM attachments WHERE parent_id = ? AND parent_type = "note";', [id]);
       await db.run('DELETE FROM reminders WHERE parent_id = ? AND parent_type = "note";', [id]);
       await db.run('DELETE FROM notes WHERE id = ?;', [id]);
-      await db.execute('COMMIT;');
+      await db.execute('COMMIT;', false);
     } catch (err) {
-      await db.execute('ROLLBACK;');
+      await db.execute('ROLLBACK;', false);
       throw err;
     }
   }

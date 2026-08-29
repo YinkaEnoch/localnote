@@ -86,16 +86,16 @@ export class ChecklistRepository {
     const db = await getDatabase();
     const now = new Date().toISOString();
     try {
-      await db.execute('BEGIN TRANSACTION;');
+      await db.execute('BEGIN TRANSACTION;', false);
       for (const item of items) {
         await db.run(
           'UPDATE checklist_items SET sort_order = ?, updated_at = ? WHERE id = ?;',
           [item.sortOrder, now, item.id]
         );
       }
-      await db.execute('COMMIT;');
+      await db.execute('COMMIT;', false);
     } catch (err) {
-      await db.execute('ROLLBACK;');
+      await db.execute('ROLLBACK;', false);
       throw err;
     }
   }

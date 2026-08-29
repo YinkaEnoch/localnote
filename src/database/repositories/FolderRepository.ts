@@ -38,7 +38,7 @@ export class FolderRepository {
           (SELECT COUNT(*) FROM events e WHERE e.folder_id = f.id AND NOT EXISTS (SELECT 1 FROM notes n WHERE n.event_id = e.id AND n.folder_id = f.id))
         ) as item_count
       FROM folders f
-      ORDER BY f.name ASC COLLATE NOCASE;
+      ORDER BY f.name COLLATE NOCASE ASC;
     `;
     const res = await db.query(query);
     return (res.values || []).map(mapRowToFolderWithCount);
@@ -98,13 +98,13 @@ export class FolderRepository {
   static async remove(id: string): Promise<void> {
     const db = await getDatabase();
     try {
-      await db.execute('BEGIN TRANSACTION;');
+      await db.execute('BEGIN TRANSACTION;', false);
       await db.run('UPDATE notes SET folder_id = NULL WHERE folder_id = ?;', [id]);
       await db.run('UPDATE events SET folder_id = NULL WHERE folder_id = ?;', [id]);
       await db.run('DELETE FROM folders WHERE id = ?;', [id]);
-      await db.execute('COMMIT;');
+      await db.execute('COMMIT;', false);
     } catch (err) {
-      await db.execute('ROLLBACK;');
+      await db.execute('ROLLBACK;', false);
       throw err;
     }
   }
