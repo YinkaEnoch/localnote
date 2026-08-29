@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
+import { useDrawer } from '@/components/layout/DrawerContext';
 import type { FolderWithCount, NoteListItem, SortOption } from '@/types/models';
 import './NotesHomePage.css';
 
 export function NotesHomePage() {
   const navigate = useNavigate();
+  const openDrawer = useDrawer();
   const [folders, setFolders] = useState<FolderWithCount[]>([]);
   const [items, setItems] = useState<NoteListItem[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('updated');
@@ -100,7 +102,7 @@ export function NotesHomePage() {
   return (
     <div className="notes-home-page">
       <header className="top-bar">
-        <button className="top-bar-icon-button left">
+        <button className="top-bar-icon-button left" onClick={openDrawer} aria-label="Open menu">
           <span className="material-symbols-outlined">menu</span>
         </button>
         <div className="top-bar-title">LocalNote</div>
