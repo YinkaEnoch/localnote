@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { getDatabase } from '@/database/connection';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
@@ -64,18 +66,46 @@ export function BackupPage() {
       };
 
       const jsonStr = JSON.stringify(backupData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
       const dateStr = new Date().toISOString().split('T')[0];
-      link.href = url;
-      link.download = `localnote-backup-${dateStr}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const fileName = `localnote-backup-${dateStr}.json`;
 
-      setMessage({ text: 'Backup exported successfully!', type: 'success' });
+      let savedPath: string | null = null;
+
+      if (Capacitor.getPlatform() !== 'web') {
+        // Native (Android/iOS): write to the app's Documents directory and
+        // resolve the on-disk URI so we can tell the user where it landed.
+        await Filesystem.writeFile({
+          path: fileName,
+          data: jsonStr,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8,
+          recursive: true,
+        });
+        const uriResult = await Filesystem.getUri({
+          path: fileName,
+          directory: Directory.Documents,
+        });
+        savedPath = uriResult.uri;
+      } else {
+        // Web: fall back to a browser download and report the filename.
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        savedPath = fileName;
+      }
+
+      setMessage({
+        text: savedPath
+          ? `Backup exported successfully! Saved to: ${savedPath}`
+          : 'Backup exported successfully!',
+        type: 'success',
+      });
     } catch (err: any) {
       console.error('Export error:', err);
       setMessage({ text: `Export failed: ${err.message}`, type: 'error' });
