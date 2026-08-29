@@ -213,6 +213,36 @@
   
   /* Font size variables */
   --font-size-base: 16px;
+
+  /*
+   * Legacy alias tokens — page-level stylesheets (Calendar, Editor, Folder, …)
+   * reference these names; keep them in sync with the canonical tokens above.
+   */
+  --spacing-unit: 4px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+  --spacing-xxl: 64px;
+  --spacing-gutter: 16px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 32px;
+
+  --border-radius-sm: 0.125rem;
+  --border-radius-default: 0.25rem;
+  --border-radius-md: 0.375rem;
+  --border-radius-lg: 0.5rem;
+  --border-radius-xl: 0.75rem;
+  --border-radius-full: 9999px;
+
+  --font-display-lg: 'Inter', sans-serif;
+  --font-display-lg-mobile: 'Inter', sans-serif;
+  --font-headline-md: 'Inter', sans-serif;
+  --font-body-lg: 'Inter', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-label-sm: 'Inter', sans-serif;
+  --color-primary-fixed: #e1e0ff;
 }
 
 [data-theme='light'] {
@@ -257,6 +287,7 @@
   --color-note-forest: #DCFCE7;
   --color-note-indigo: #E0F2FE;
   --color-note-slate: #F4F4F5;
+  --color-primary-fixed: #494bd6;
 }
 
 [data-font-size='small'] {
