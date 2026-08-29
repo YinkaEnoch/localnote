@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  padding-top: 4rem;
 }
 
 .calendar-container {
@@ -86,18 +87,18 @@
 
 .day {
   position: relative;
-  height: 40px;
+  height: 44px;
   width: 40px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-family: var(--font-body-md);
-  font-size: 16px;
-  color: var(--color-on-background);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: var(--color-on-surface-variant);
   transition: background-color 0.2s;
 }
 
@@ -110,15 +111,19 @@
   pointer-events: none;
 }
 
+.day-number {
+  line-height: 20px;
+}
+
 .day.selected {
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-  font-weight: bold;
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font-weight: 600;
 }
 
 .day-indicators {
   position: absolute;
-  bottom: 4px;
+  bottom: 3px;
   display: flex;
   gap: 2px;
 }
@@ -126,21 +131,21 @@
 .indicator {
   width: 4px;
   height: 4px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
 }
 
 .event-indicator {
   background-color: var(--color-secondary);
 }
 .day.selected .event-indicator {
-  background-color: var(--color-on-primary);
+  background-color: var(--color-on-primary-container);
 }
 
 .note-indicator {
   background-color: var(--color-tertiary);
 }
 .day.selected .note-indicator {
-  background-color: var(--color-on-primary);
+  background-color: var(--color-on-primary-container);
 }
 
 .daily-agenda {
@@ -179,15 +184,17 @@
 
 .item-icon-wrapper {
   margin-top: 4px;
-  padding: 8px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .event-icon {
-  background-color: rgba(79, 219, 200, 0.1);
+  background-color: rgba(79, 219, 200, 0.12);
   color: var(--color-secondary);
 }
 
