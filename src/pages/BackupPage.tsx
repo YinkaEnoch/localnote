@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { getDatabase } from '@/database/connection';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { EventRepository } from '@/database/repositories/EventRepository';
+import { SaveFile } from '@/plugins/save-file';
 
 interface StorageStats {
   notesCount: number;
@@ -69,41 +68,17 @@ export function BackupPage() {
       const dateStr = new Date().toISOString().split('T')[0];
       const fileName = `localnote-backup-${dateStr}.json`;
 
-      let savedPath: string | null = null;
-
-      if (Capacitor.getPlatform() !== 'web') {
-        // Native (Android/iOS): write to the app's Documents directory and
-        // resolve the on-disk URI so we can tell the user where it landed.
-        await Filesystem.writeFile({
-          path: fileName,
-          data: jsonStr,
-          directory: Directory.Documents,
-          encoding: Encoding.UTF8,
-          recursive: true,
-        });
-        const uriResult = await Filesystem.getUri({
-          path: fileName,
-          directory: Directory.Documents,
-        });
-        savedPath = uriResult.uri;
-      } else {
-        // Web: fall back to a browser download and report the filename.
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        savedPath = fileName;
-      }
+      // Let the user choose where to save the file. On native this opens the
+      // Android Storage Access Framework "Save As" dialog; on web it falls
+      // back to a normal browser download.
+      const res = await SaveFile.saveFile({
+        fileName,
+        data: jsonStr,
+        mimeType: 'application/json',
+      });
 
       setMessage({
-        text: savedPath
-          ? `Backup exported successfully! Saved to: ${savedPath}`
-          : 'Backup exported successfully!',
+        text: `Backup exported successfully! Saved to: ${res.uri}`,
         type: 'success',
       });
     } catch (err: any) {
