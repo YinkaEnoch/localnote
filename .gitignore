@@ -27,3 +27,5 @@ coverage/
 
 # Temporary
 .tmp/
+
+Makefile
