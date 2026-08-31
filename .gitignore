@@ -30,3 +30,4 @@ coverage/
 
 Makefile
 adb-install.sh
+adb-update.sh
