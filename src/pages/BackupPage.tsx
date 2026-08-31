@@ -147,7 +147,8 @@ export function BackupPage() {
         for (const f of backup.data.folders || []) {
           await db.run(
             'INSERT INTO folders (id, name, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?);',
-            [f.id, f.name, f.color, f.created_at, f.updated_at]
+            [f.id, f.name, f.color, f.created_at, f.updated_at],
+            false
           );
         }
 
