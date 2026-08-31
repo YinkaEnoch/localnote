@@ -130,11 +130,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  opacity: 0;
   transition: opacity 0.2s;
-}
-.fp-card:hover .fp-card-indicator {
-  opacity: 1;
 }
 
 .fp-card-header {

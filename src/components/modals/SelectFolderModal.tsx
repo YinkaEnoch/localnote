@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
+import { FOLDER_COLOR_VAR } from '@/theme/colors';
 import type { FolderWithCount } from '@/types/models';
 
 interface SelectFolderModalProps {
@@ -95,7 +96,7 @@ export function SelectFolderModal({ isOpen, onClose, onSelect, currentFolderId }
                 >
                   <span 
                     className="material-symbols-outlined" 
-                    style={{ color: `var(--color-${folder.color})`, fontVariationSettings: "'FILL' 1" }}
+                    style={{ color: FOLDER_COLOR_VAR[folder.color].bg, fontVariationSettings: "'FILL' 1" }}
                   >
                     folder
                   </span>

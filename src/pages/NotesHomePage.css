@@ -196,12 +196,7 @@
   bottom: 25%;
   width: 4px;
   border-radius: 0 var(--radius-full) var(--radius-full) 0;
-  opacity: 0;
   transition: opacity 0.2s;
-}
-
-.list-item:hover .list-item-indicator {
-  opacity: 1;
 }
 
 .list-item-content {

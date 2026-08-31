@@ -2,17 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
+import { FOLDER_COLOR_VAR } from '@/theme/colors';
 import type { FolderColor } from '@/types/models';
 import './EditFolderPage.css';
-
-const colorMapping: Record<FolderColor, { bg: string, onBg: string }> = {
-  purple: { bg: 'var(--color-primary)', onBg: 'var(--color-on-primary)' },
-  coral: { bg: 'var(--color-tertiary-container)', onBg: 'var(--color-on-tertiary-container)' },
-  amber: { bg: 'var(--color-tertiary)', onBg: 'var(--color-on-tertiary)' },
-  teal: { bg: 'var(--color-secondary-container)', onBg: 'var(--color-on-secondary-container)' },
-  lavender: { bg: 'var(--color-primary-container)', onBg: 'var(--color-on-primary-container)' },
-  blue: { bg: 'var(--color-inverse-primary)', onBg: 'var(--color-primary-container)' },
-};
 
 const FOLDER_COLORS: FolderColor[] = ['purple', 'coral', 'amber', 'teal', 'lavender', 'blue'];
 
@@ -88,12 +80,12 @@ export function EditFolderPage() {
               <button
                 key={color}
                 className={`efp-color-swatch ${selectedColor === color ? 'selected' : ''}`}
-                style={{ backgroundColor: colorMapping[color].bg }}
+                style={{ backgroundColor: FOLDER_COLOR_VAR[color].bg }}
                 onClick={() => setSelectedColor(color)}
                 aria-label={`Select ${color}`}
               >
                 {selectedColor === color && (
-                  <span className="material-symbols-outlined icon" style={{ color: colorMapping[color].onBg }}>
+                  <span className="material-symbols-outlined icon" style={{ color: FOLDER_COLOR_VAR[color].onBg }}>
                     check
                   </span>
                 )}

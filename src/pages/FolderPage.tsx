@@ -2,17 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
-import type { Folder, NoteListItem, NoteColor } from '@/types/models';
+import { NOTE_COLOR_VAR, FOLDER_COLOR_VAR } from '@/theme/colors';
+import type { Folder, NoteListItem } from '@/types/models';
 import './FolderPage.css';
-
-/** CSS var per note color; 'default' falls back to the type-based hue. */
-const NOTE_COLOR_VAR: Partial<Record<NoteColor, string>> = {
-  orange: 'var(--color-tertiary)',
-  teal: 'var(--color-secondary)',
-  red: 'var(--color-error)',
-  purple: 'var(--color-primary)',
-  blue: 'var(--color-primary-container)',
-};
 
 export function FolderPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,8 +51,8 @@ export function FolderPage() {
       
       <main className="fp-main">
         <div className="fp-folder-header">
-          <div className="fp-folder-icon" style={{ backgroundColor: 'var(--color-primary-container)' }}>
-            <span className="material-symbols-outlined" style={{ color: 'var(--color-on-primary-container)' }}>
+          <div className="fp-folder-icon" style={{ backgroundColor: FOLDER_COLOR_VAR[folder.color].bg }}>
+            <span className="material-symbols-outlined" style={{ color: FOLDER_COLOR_VAR[folder.color].onBg }}>
               folder
             </span>
           </div>
