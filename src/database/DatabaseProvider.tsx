@@ -31,7 +31,15 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   if (state === 'loading') {
-    return null; // or a loading spinner
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-md bg-background">
+        <div
+          className="w-10 h-10 rounded-full border-[3px] border-primary border-t-transparent animate-spin"
+          aria-label="Loading"
+        />
+        <p className="font-body-md text-body-md text-on-surface-variant">Loading local database…</p>
+      </div>
+    );
   }
 
   if (state === 'error') {

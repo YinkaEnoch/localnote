@@ -6,6 +6,7 @@ import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import type { Event, NoteColor, ReminderOffset, EventSound } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
+import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import { scheduleEventReminder, cancelEventReminder } from '@/services/reminderService';
 
 export function EventEditorPage() {
@@ -34,6 +35,7 @@ export function EventEditorPage() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isReminderMenuOpen, setIsReminderMenuOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const reminderMenuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
@@ -118,7 +120,7 @@ export function EventEditorPage() {
   };
 
   const handleDelete = async () => {
-    if (event && window.confirm('Are you sure you want to delete this event?')) {
+    if (event) {
       await cancelEventReminder(event.id);
       await EventRepository.remove(event.id);
       navigate(-1);
@@ -246,7 +248,7 @@ export function EventEditorPage() {
                     </button>
                     <button
                       className="w-full text-left px-4 py-2 hover:bg-surface-container-highest text-error flex items-center gap-2"
-                      onClick={handleDelete}
+                      onClick={() => { setConfirmDeleteOpen(true); setIsMenuOpen(false); }}
                     >
                       <span className="material-symbols-outlined text-[18px]">delete</span>
                       Delete Event
@@ -512,7 +514,7 @@ export function EventEditorPage() {
               <button
                 aria-label="Delete Event"
                 className="w-12 h-12 flex flex-col items-center justify-center text-on-surface-variant hover:text-error hover:bg-surface-container rounded-full transition-all duration-200"
-                onClick={handleDelete}
+                onClick={() => setConfirmDeleteOpen(true)}
                 title="Delete Event"
               >
                 <span className="material-symbols-outlined">delete</span>
@@ -531,6 +533,19 @@ export function EventEditorPage() {
           setIsFolderModalOpen(false);
         }}
         currentFolderId={folderId}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        title="Delete Event?"
+        message="This event will be permanently removed. This action cannot be undone."
+        confirmText="Delete"
+        destructive
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          handleDelete();
+        }}
+        onCancel={() => setConfirmDeleteOpen(false)}
       />
     </div>
   );

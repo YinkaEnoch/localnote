@@ -4,6 +4,7 @@ import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { SaveFile } from '@/plugins/save-file';
+import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 
 interface StorageStats {
   notesCount: number;
@@ -17,6 +18,8 @@ export function BackupPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [confirmImportOpen, setConfirmImportOpen] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -93,14 +96,17 @@ export function BackupPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const confirmed = window.confirm(
-      'WARNING: Importing this backup will overwrite existing local data. Do you want to proceed?'
-    );
-    if (!confirmed) {
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
+    // Store the pending file and ask for confirmation (non-blocking).
+    setPendingImportFile(file);
+    setConfirmImportOpen(true);
+  };
 
+  const handleConfirmImport = async () => {
+    const file = pendingImportFile;
+    if (!file) return;
+
+    setPendingImportFile(null);
+    setConfirmImportOpen(false);
     setIsImporting(true);
     setMessage(null);
 
@@ -325,6 +331,20 @@ export function BackupPage() {
           </section>
         </div>
       </main>
+
+      <ConfirmDialog
+        isOpen={confirmImportOpen}
+        title="Replace all data?"
+        message="Importing this backup will completely overwrite all current local data (notes, folders, events). This cannot be undone. Do you want to proceed?"
+        confirmText="Import"
+        destructive
+        onConfirm={handleConfirmImport}
+        onCancel={() => {
+          setConfirmImportOpen(false);
+          setPendingImportFile(null);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+        }}
+      />
     </div>
   );
 }

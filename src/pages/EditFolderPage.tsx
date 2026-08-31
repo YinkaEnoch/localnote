@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
+import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import type { FolderColor } from '@/types/models';
 import './EditFolderPage.css';
 
@@ -22,6 +23,7 @@ export function EditFolderPage() {
   
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState<FolderColor>('purple');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -45,7 +47,7 @@ export function EditFolderPage() {
   };
 
   const handleDelete = async () => {
-    if (id && window.confirm('Are you sure you want to delete this folder? Items in it will be uncategorized.')) {
+    if (id) {
       await FolderRepository.remove(id);
       navigate('/', { replace: true });
     }
@@ -104,13 +106,26 @@ export function EditFolderPage() {
 
         {!isNew && (
           <section>
-            <button className="efp-delete-btn text-base" onClick={handleDelete}>
+            <button className="efp-delete-btn text-base" onClick={() => setConfirmDeleteOpen(true)}>
               <span className="material-symbols-outlined">delete</span>
               Delete Folder
             </button>
           </section>
         )}
       </main>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        title="Delete Folder?"
+        message="Items in this folder will be uncategorized. This action cannot be undone."
+        confirmText="Delete"
+        destructive
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          handleDelete();
+        }}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 }

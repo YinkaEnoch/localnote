@@ -5,6 +5,7 @@ import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { ChecklistRepository } from '@/database/repositories/ChecklistRepository';
 import type { Note, ChecklistItem, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
+import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 
 /**
  * Textarea that always wraps long text (no horizontal scrolling) and grows
@@ -55,6 +56,7 @@ export function ChecklistEditorPage() {
   const [newItemText, setNewItemText] = useState('');
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
   const newItemInputRef = useRef<HTMLInputElement>(null);
@@ -159,7 +161,7 @@ export function ChecklistEditorPage() {
   };
 
   const handleDeleteNote = async () => {
-    if (note && window.confirm('Delete this checklist?')) {
+    if (note) {
       await NoteRepository.remove(note.id);
       navigate('/', { replace: true });
     }
@@ -235,7 +237,7 @@ export function ChecklistEditorPage() {
                 {note && (
                   <button
                     className="w-full text-left px-4 py-2 hover:bg-surface-container-highest text-error flex items-center gap-2"
-                    onClick={handleDeleteNote}
+                    onClick={() => setConfirmDeleteOpen(true)}
                   >
                     <span className="material-symbols-outlined text-[18px]">delete</span>
                     Delete Checklist
@@ -386,6 +388,19 @@ export function ChecklistEditorPage() {
           setIsFolderModalOpen(false);
         }}
         currentFolderId={folderId}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        title="Delete Checklist?"
+        message="This checklist will be permanently removed. This action cannot be undone."
+        confirmText="Delete"
+        destructive
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          handleDeleteNote();
+        }}
+        onCancel={() => setConfirmDeleteOpen(false)}
       />
     </div>
   );

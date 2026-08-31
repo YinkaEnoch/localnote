@@ -154,7 +154,7 @@ export function CalendarPage() {
           </div>
         </div>
 
-        <div className="daily-agenda">
+        <div className="daily-agenda mb-8">
           <h2 className="agenda-date">{selectedFullDateString}</h2>
           
           <div className="agenda-items">
