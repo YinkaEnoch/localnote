@@ -88,7 +88,7 @@ export function SettingsPage() {
             <div className="bg-surface rounded-xl overflow-hidden shadow-sm border border-outline-variant/20">
               <div className="p-md flex items-center justify-between border-b border-surface-variant">
                 <h3 className="font-body-md text-body-md text-on-surface">Version</h3>
-                <span className="font-body-md text-body-md text-on-surface-variant">v1.0.0</span>
+                <span className="font-body-md text-body-md text-on-surface-variant">v{__APP_VERSION__}</span>
               </div>
               <div 
                 className="p-md flex items-center justify-between border-b border-surface-variant hover:bg-surface-container transition-colors cursor-pointer"

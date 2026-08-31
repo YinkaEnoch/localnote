@@ -1,7 +1,7 @@
 {
   "name": "local-note",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Offline-first note-taking application",
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
-    "build:android": "JAVA_HOME=$HOME/.bubblewrap/jdk/jdk-17.0.11+9 ./android/gradlew -p android assembleDebug"
+    "build:android": "JAVA_HOME=$HOME/.bubblewrap/jdk/jdk-17.0.11+9 ./android/gradlew -p android assembleDebug",
+    "build:apk": "npm run build && npx cap sync android && npm run build:android"
   },
   "author": "Yinka Enoch Adedokun <adedokunyinkaenoch@gmail.com> (https://github.com/yinkaenoch)",
   "license": "ISC",

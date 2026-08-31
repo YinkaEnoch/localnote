@@ -47,7 +47,7 @@ export function EditFolderPage() {
   const handleDelete = async () => {
     if (id && window.confirm('Are you sure you want to delete this folder? Items in it will be uncategorized.')) {
       await FolderRepository.remove(id);
-      navigate('/notes', { replace: true });
+      navigate('/', { replace: true });
     }
   };
 
