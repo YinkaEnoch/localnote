@@ -113,7 +113,9 @@ export function BackupPage() {
       }
 
       const db = await getDatabase();
-      await db.execute('BEGIN TRANSACTION;');
+      // transaction: false everywhere — the plugin's implicit per-run
+      // transaction would conflict with the manual BEGIN/COMMIT here.
+      await db.execute('BEGIN TRANSACTION;', false);
 
       try {
         // Clear existing data
@@ -125,7 +127,7 @@ export function BackupPage() {
           DELETE FROM events;
           DELETE FROM folders;
           DELETE FROM settings;
-        `);
+        `, false);
 
         // Insert Folders
         for (const f of backup.data.folders || []) {
@@ -135,12 +137,24 @@ export function BackupPage() {
           );
         }
 
-        // Insert Events
-        for (const ev of backup.data.events || []) {
+        // Insert Events (sound/reminder_days default for older backups)
+        interface BackupEventRow {
+          id: string; title: string; start_date: string; end_date: string | null;
+          all_day: number; reminder: string; sound?: string; reminder_days?: string;
+          description: string; links: string; color: string; folder_id: string | null;
+          created_at: string; updated_at: string;
+        }
+        for (const ev of (backup.data.events || []) as BackupEventRow[]) {
           await db.run(
-            `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, description, links, color, folder_id, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-            [ev.id, ev.title, ev.start_date, ev.end_date, ev.all_day, ev.reminder, ev.description, ev.links, ev.color, ev.folder_id, ev.created_at, ev.updated_at]
+            `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, sound, reminder_days, description, links, color, folder_id, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            [
+              ev.id, ev.title, ev.start_date, ev.end_date, ev.all_day, ev.reminder,
+              ev.sound || 'default',
+              ev.reminder_days || '[]',
+              ev.description, ev.links, ev.color, ev.folder_id, ev.created_at, ev.updated_at,
+            ],
+            false
           );
         }
 
@@ -149,7 +163,8 @@ export function BackupPage() {
           await db.run(
             `INSERT INTO notes (id, title, content, type, color, folder_id, event_id, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-            [n.id, n.title, n.content, n.type, n.color, n.folder_id, n.event_id, n.created_at, n.updated_at]
+            [n.id, n.title, n.content, n.type, n.color, n.folder_id, n.event_id, n.created_at, n.updated_at],
+            false
           );
         }
 
@@ -158,7 +173,8 @@ export function BackupPage() {
           await db.run(
             `INSERT INTO checklist_items (id, note_id, text, is_completed, sort_order, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?);`,
-            [c.id, c.note_id, c.text, c.is_completed, c.sort_order, c.created_at, c.updated_at]
+            [c.id, c.note_id, c.text, c.is_completed, c.sort_order, c.created_at, c.updated_at],
+            false
           );
         }
 
@@ -167,7 +183,8 @@ export function BackupPage() {
           await db.run(
             `INSERT INTO attachments (id, parent_id, parent_type, filename, filepath, mime_type, size, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-            [a.id, a.parent_id, a.parent_type, a.filename, a.filepath, a.mime_type, a.size, a.created_at]
+            [a.id, a.parent_id, a.parent_type, a.filename, a.filepath, a.mime_type, a.size, a.created_at],
+            false
           );
         }
 
@@ -176,7 +193,8 @@ export function BackupPage() {
           await db.run(
             `INSERT INTO reminders (id, parent_id, parent_type, remind_at, notification_id, created_at)
              VALUES (?, ?, ?, ?, ?, ?);`,
-            [r.id, r.parent_id, r.parent_type, r.remind_at, r.notification_id, r.created_at]
+            [r.id, r.parent_id, r.parent_type, r.remind_at, r.notification_id, r.created_at],
+            false
           );
         }
 
@@ -184,15 +202,16 @@ export function BackupPage() {
         for (const s of backup.data.settings || []) {
           await db.run(
             'INSERT INTO settings (key, value) VALUES (?, ?);',
-            [s.key, s.value]
+            [s.key, s.value],
+            false
           );
         }
 
-        await db.execute('COMMIT;');
+        await db.execute('COMMIT;', false);
         setMessage({ text: 'Data successfully restored from backup!', type: 'success' });
         await loadStats();
       } catch (err) {
-        await db.execute('ROLLBACK;');
+        await db.execute('ROLLBACK;', false);
         throw err;
       }
     } catch (err: any) {

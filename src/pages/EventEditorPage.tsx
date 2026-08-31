@@ -26,6 +26,7 @@ export function EventEditorPage() {
   
   const [reminder, setReminder] = useState<ReminderOffset>('10min');
   const [sound, setSound] = useState<EventSound>('default');
+  const [reminderDays, setReminderDays] = useState<number[]>([]);
   const [description, setDescription] = useState('');
   const [folderId, setFolderId] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
@@ -66,6 +67,7 @@ export function EventEditorPage() {
         setEndDate(e.endDate ? e.endDate.slice(0, 16) : `${e.startDate.slice(0, 10)}T10:00`);
         setReminder(e.reminder);
         setSound(e.sound || 'default');
+        setReminderDays(e.reminderDays || []);
         setDescription(e.description || '');
         setFolderId(e.folderId);
       }
@@ -87,6 +89,7 @@ export function EventEditorPage() {
       allDay,
       reminder,
       sound,
+      reminderDays: reminderDays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
       description,
       links: JSON.stringify([]),
       color,
@@ -149,6 +152,28 @@ export function EventEditorPage() {
     blue: 'bg-inverse-primary',
   };
 
+  const toggleReminderDay = (day: number) => {
+    setReminderDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort((a, b) => a - b));
+  };
+
+  const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  // The weekday selector is only meaningful when the event spans a real
+  // date range (start date ≠ end date).
+  const hasDateRange = (startDate || '').slice(0, 10) !== (endDate || '').slice(0, 10);
+
+  const handleColorSelect = async (c: NoteColor) => {
+    setColor(c);
+    // Persist immediately so the pick survives backing out without saving.
+    if (!isNew && id) {
+      try {
+        await EventRepository.update(id, { color: c });
+      } catch (err) {
+        console.error('Failed to update event color:', err);
+      }
+    }
+  };
+
   const reminderLabels: Record<ReminderOffset, string> = {
     none: 'None',
     '5min': '5 minutes before',
@@ -202,7 +227,7 @@ export function EventEditorPage() {
               <span className="material-symbols-outlined">more_vert</span>
             </button>
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-surface-container rounded-lg shadow-lg py-1 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-surface-container rounded-lg shadow-lg py-1 z-50 text-base">
                 <button
                   className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2"
                   onClick={() => { setIsFolderModalOpen(true); setIsMenuOpen(false); }}
@@ -251,7 +276,7 @@ export function EventEditorPage() {
             <button
               key={c}
               className={`w-8 h-8 rounded-full ${colorBgMap[c]} border-2 ${color === c ? 'border-primary' : 'border-transparent'} flex items-center justify-center shrink-0 transition-all`}
-              onClick={() => setColor(c)}
+              onClick={() => handleColorSelect(c)}
               aria-label={`Select ${c} color`}
             >
               {color === c && (
@@ -328,6 +353,42 @@ export function EventEditorPage() {
             </div>
           </div>
         </div>
+
+        {/* Reminder Days — only for events spanning multiple days */}
+        {hasDateRange && (
+          <>
+            <div className="h-px w-full bg-surface-variant" />
+            <div className="flex flex-col gap-sm py-sm">
+              <div className="flex items-center gap-md">
+                <span className="material-symbols-outlined text-on-surface-variant">event_repeat</span>
+                <span className="font-body-md text-body-md text-on-background">Remind me on</span>
+              </div>
+              <p className="font-label-sm text-label-sm text-on-surface-variant pl-[40px]">
+                {reminderDays.length === 0
+                  ? 'Every day in the selected range'
+                  : `Only on ${reminderDays.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}`}
+              </p>
+              <div className="flex gap-sm pl-[40px] pt-1">
+                {WEEKDAY_LABELS.map((label, day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    aria-pressed={reminderDays.includes(day)}
+                    aria-label={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day]}
+                    className={`w-9 h-9 rounded-full font-label-sm text-label-sm border-2 transition-colors ${
+                      reminderDays.includes(day)
+                        ? 'bg-primary border-primary text-on-primary'
+                        : 'bg-surface-container-low border-outline-variant text-on-surface-variant hover:bg-surface-container'
+                    }`}
+                    onClick={() => toggleReminderDay(day)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="h-px w-full bg-surface-variant" />
 

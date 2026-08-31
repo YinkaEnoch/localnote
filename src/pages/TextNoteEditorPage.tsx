@@ -88,6 +88,7 @@ export function TextNoteEditorPage() {
       allDay: false,
       reminder: '10min',
       sound: 'default',
+      reminderDays: [],
       description: plainText,
       links: JSON.stringify([]),
       color,
@@ -104,6 +105,18 @@ export function TextNoteEditorPage() {
     if (!dateString) return 'Now';
     const date = new Date(dateString);
     return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  };
+
+  const handleColorSelect = async (c: NoteColor) => {
+    setColor(c);
+    // Persist immediately so the pick survives backing out without saving.
+    if (note) {
+      try {
+        await NoteRepository.update(note.id, { color: c });
+      } catch (err) {
+        console.error('Failed to update note color:', err);
+      }
+    }
   };
 
   const colorOptions: NoteColor[] = ['default', 'red', 'orange', 'teal', 'purple', 'blue'];
@@ -155,7 +168,7 @@ export function TextNoteEditorPage() {
       <main className="flex-1 flex flex-col overflow-y-auto px-margin-mobile md:px-margin-desktop py-lg max-w-[800px] w-full mx-auto hide-scrollbar">
         <div className="flex gap-sm mb-lg animate-fade-in-up">
           {colorOptions.map((c) => (
-            <button key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full ${colorMap[c]} border-2 ${color === c ? 'border-primary' : 'border-transparent'} transition-all`}></button>
+            <button key={c} onClick={() => handleColorSelect(c)} aria-label={`Select ${c} color`} className={`w-6 h-6 rounded-full ${colorMap[c]} border-2 ${color === c ? 'border-primary' : 'border-transparent'} transition-all`}></button>
           ))}
         </div>
 

@@ -3,8 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { useDrawer } from '@/components/layout/DrawerContext';
-import type { FolderWithCount, NoteListItem, SortOption } from '@/types/models';
+import type { FolderWithCount, NoteListItem, NoteColor, SortOption } from '@/types/models';
 import './NotesHomePage.css';
+
+/** CSS var per note color; 'default' falls back to the type-based hue. */
+const NOTE_COLOR_VAR: Partial<Record<NoteColor, string>> = {
+  orange: 'var(--color-tertiary)',
+  teal: 'var(--color-secondary)',
+  red: 'var(--color-error)',
+  purple: 'var(--color-primary)',
+  blue: 'var(--color-primary-container)',
+};
 
 export function NotesHomePage() {
   const navigate = useNavigate();
@@ -53,6 +62,8 @@ export function NotesHomePage() {
   const renderItem = (item: NoteListItem, index: number) => {
     const isChecklist = item.type === 'checklist';
     const isEvent = !!item.eventId;
+    const typeColorVar = `var(--color-${isEvent ? 'tertiary' : isChecklist ? 'secondary' : 'primary'}-container)`;
+    const accentColor = NOTE_COLOR_VAR[item.color] || typeColorVar;
 
     let path = `/note/${item.id}`;
     if (isChecklist) path = `/checklist/${item.id}`;
@@ -63,17 +74,17 @@ export function NotesHomePage() {
         <div
           className="list-item"
           onClick={() => navigate(path)}
-          style={{ '--hover-border': `var(--color-${isEvent ? 'tertiary' : isChecklist ? 'secondary' : 'primary'}-container)` } as any}
+          style={{ '--hover-border': accentColor } as any}
         >
           <div
             className="list-item-indicator"
-            style={{ backgroundColor: `var(--color-${isEvent ? 'tertiary' : isChecklist ? 'secondary' : 'primary'}-container)` }}
+            style={{ backgroundColor: accentColor }}
           />
           <div className="list-item-content">
             <div className="list-item-header">
               <h3
                 className="list-item-title"
-                style={{ '--hover-color': `var(--color-${isEvent ? 'tertiary' : isChecklist ? 'secondary' : 'primary'})` } as any}
+                style={{ '--hover-color': accentColor } as any}
               >
                 {item.title}
               </h3>

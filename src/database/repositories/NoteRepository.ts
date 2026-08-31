@@ -148,11 +148,16 @@ export class NoteRepository {
   static async remove(id: string): Promise<void> {
     const db = await getDatabase();
     try {
+      // NOTE: every run() below passes `transaction: false`. The plugin's run()
+      // defaults to wrapping the statement in its own implicit BEGIN/COMMIT,
+      // which conflicts with the manual BEGIN above and throws
+      // "cannot start a transaction within a transaction" — that is what broke
+      // deletes app-wide.
       await db.execute('BEGIN TRANSACTION;', false);
-      await db.run('DELETE FROM checklist_items WHERE note_id = ?;', [id]);
-      await db.run('DELETE FROM attachments WHERE parent_id = ? AND parent_type = "note";', [id]);
-      await db.run('DELETE FROM reminders WHERE parent_id = ? AND parent_type = "note";', [id]);
-      await db.run('DELETE FROM notes WHERE id = ?;', [id]);
+      await db.run('DELETE FROM checklist_items WHERE note_id = ?;', [id], false);
+      await db.run('DELETE FROM attachments WHERE parent_id = ? AND parent_type = ?;', [id, 'note'], false);
+      await db.run('DELETE FROM reminders WHERE parent_id = ? AND parent_type = ?;', [id, 'note'], false);
+      await db.run('DELETE FROM notes WHERE id = ?;', [id], false);
       await db.execute('COMMIT;', false);
     } catch (err) {
       await db.execute('ROLLBACK;', false);

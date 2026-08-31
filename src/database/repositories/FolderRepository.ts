@@ -99,9 +99,9 @@ export class FolderRepository {
     const db = await getDatabase();
     try {
       await db.execute('BEGIN TRANSACTION;', false);
-      await db.run('UPDATE notes SET folder_id = NULL WHERE folder_id = ?;', [id]);
-      await db.run('UPDATE events SET folder_id = NULL WHERE folder_id = ?;', [id]);
-      await db.run('DELETE FROM folders WHERE id = ?;', [id]);
+      await db.run('UPDATE notes SET folder_id = NULL WHERE folder_id = ?;', [id], false);
+      await db.run('UPDATE events SET folder_id = NULL WHERE folder_id = ?;', [id], false);
+      await db.run('DELETE FROM folders WHERE id = ?;', [id], false);
       await db.execute('COMMIT;', false);
     } catch (err) {
       await db.execute('ROLLBACK;', false);

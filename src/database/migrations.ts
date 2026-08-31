@@ -88,6 +88,15 @@ const MIGRATIONS = [
       // long alarm loop). Existing rows keep 'default'.
       `ALTER TABLE events ADD COLUMN sound TEXT NOT NULL DEFAULT 'default';`
     ]
+  },
+  {
+    version: 3,
+    up: [
+      // Weekday-scoped reminders for events spanning a date range. JSON array
+      // of weekday numbers (0 = Sunday … 6 = Saturday); '[]' means "remind on
+      // the start date only" (previous behaviour).
+      `ALTER TABLE events ADD COLUMN reminder_days TEXT NOT NULL DEFAULT '[]';`
+    ]
   }
 ];
 

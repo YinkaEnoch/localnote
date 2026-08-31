@@ -31,6 +31,21 @@
     color: var(--color-on-surface-variant, #c7c4d7);
 }
 
+/* Checklist item textareas: always wrap, never scroll horizontally */
+.checklist-item-text {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    background: transparent;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: hidden;
+    resize: none;
+    border: none;
+    line-height: 1.5;
+    font-family: inherit;
+}
+
 .drag-handle {
     cursor: grab;
 }

@@ -10,6 +10,7 @@ interface EventRow {
   all_day: number;
   reminder: string;
   sound: string;
+  reminder_days: string;
   description: string;
   links: string;
   color: string;
@@ -26,6 +27,7 @@ const mapRowToEvent = (row: EventRow): Event => ({
   allDay: Boolean(row.all_day),
   reminder: row.reminder as ReminderOffset,
   sound: (row.sound as EventSound) || 'default',
+  reminderDays: parseReminderDays(row.reminder_days),
   description: row.description,
   links: row.links,
   color: row.color as NoteColor,
@@ -33,6 +35,15 @@ const mapRowToEvent = (row: EventRow): Event => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
+
+const parseReminderDays = (value: string | undefined | null): number[] => {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed.filter((d): d is number => typeof d === 'number') : [];
+  } catch {
+    return [];
+  }
+};
 
 const getSortClause = (sortBy: SortOption): string => {
   switch (sortBy) {
@@ -86,8 +97,8 @@ export class EventRepository {
     const now = new Date().toISOString();
 
     await db.run(
-      `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, sound, description, links, color, folder_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, sound, reminder_days, description, links, color, folder_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         id,
         event.title,
@@ -96,6 +107,7 @@ export class EventRepository {
         event.allDay ? 1 : 0,
         event.reminder,
         event.sound,
+        JSON.stringify(event.reminderDays ?? []),
         event.description,
         event.links,
         event.color,
@@ -130,7 +142,7 @@ export class EventRepository {
 
     await db.run(
       `UPDATE events
-       SET title = ?, start_date = ?, end_date = ?, all_day = ?, reminder = ?, sound = ?, description = ?, links = ?, color = ?, folder_id = ?, updated_at = ?
+       SET title = ?, start_date = ?, end_date = ?, all_day = ?, reminder = ?, sound = ?, reminder_days = ?, description = ?, links = ?, color = ?, folder_id = ?, updated_at = ?
        WHERE id = ?;`,
       [
         updated.title,
@@ -139,6 +151,7 @@ export class EventRepository {
         updated.allDay ? 1 : 0,
         updated.reminder,
         updated.sound,
+        JSON.stringify(updated.reminderDays ?? []),
         updated.description,
         updated.links,
         updated.color,
@@ -155,10 +168,10 @@ export class EventRepository {
     const db = await getDatabase();
     try {
       await db.execute('BEGIN TRANSACTION;', false);
-      await db.run('UPDATE notes SET event_id = NULL WHERE event_id = ?;', [id]);
-      await db.run('DELETE FROM attachments WHERE parent_id = ? AND parent_type = "event";', [id]);
-      await db.run('DELETE FROM reminders WHERE parent_id = ? AND parent_type = "event";', [id]);
-      await db.run('DELETE FROM events WHERE id = ?;', [id]);
+      await db.run('UPDATE notes SET event_id = NULL WHERE event_id = ?;', [id], false);
+      await db.run('DELETE FROM attachments WHERE parent_id = ? AND parent_type = ?;', [id, 'event'], false);
+      await db.run('DELETE FROM reminders WHERE parent_id = ? AND parent_type = ?;', [id, 'event'], false);
+      await db.run('DELETE FROM events WHERE id = ?;', [id], false);
       await db.execute('COMMIT;', false);
     } catch (err) {
       await db.execute('ROLLBACK;', false);

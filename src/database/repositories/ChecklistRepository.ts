@@ -90,7 +90,8 @@ export class ChecklistRepository {
       for (const item of items) {
         await db.run(
           'UPDATE checklist_items SET sort_order = ?, updated_at = ? WHERE id = ?;',
-          [item.sortOrder, now, item.id]
+          [item.sortOrder, now, item.id],
+          false
         );
       }
       await db.execute('COMMIT;', false);

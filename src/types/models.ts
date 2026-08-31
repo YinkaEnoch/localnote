@@ -38,6 +38,7 @@ export interface Event {
   allDay: boolean;
   reminder: ReminderOffset;
   sound: EventSound; // notification/alarm sound to use for the reminder
+  reminderDays: number[]; // weekdays (0=Sun..6=Sat) to remind on within [startDate, endDate]; empty = start date only
   description: string;
   links: string; // JSON array string
   color: NoteColor;

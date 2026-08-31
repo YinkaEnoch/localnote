@@ -2,8 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
-import type { Folder, NoteListItem } from '@/types/models';
+import type { Folder, NoteListItem, NoteColor } from '@/types/models';
 import './FolderPage.css';
+
+/** CSS var per note color; 'default' falls back to the type-based hue. */
+const NOTE_COLOR_VAR: Partial<Record<NoteColor, string>> = {
+  orange: 'var(--color-tertiary)',
+  teal: 'var(--color-secondary)',
+  red: 'var(--color-error)',
+  purple: 'var(--color-primary)',
+  blue: 'var(--color-primary-container)',
+};
 
 export function FolderPage() {
   const { id } = useParams<{ id: string }>();
@@ -69,7 +78,8 @@ export function FolderPage() {
             if (isChecklist) path = `/checklist/${item.id}`;
             if (isEvent) path = `/event/${item.eventId}`;
             
-            const colorVar = isEvent ? 'var(--color-tertiary)' : isChecklist ? 'var(--color-secondary)' : 'var(--color-primary)';
+            const typeColorVar = isEvent ? 'var(--color-tertiary)' : isChecklist ? 'var(--color-secondary)' : 'var(--color-primary)';
+            const colorVar = NOTE_COLOR_VAR[item.color] || typeColorVar;
 
             return (
               <div key={item.id} className="fp-card" onClick={() => navigate(path)}>

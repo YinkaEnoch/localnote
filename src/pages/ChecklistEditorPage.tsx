@@ -6,6 +6,42 @@ import { ChecklistRepository } from '@/database/repositories/ChecklistRepository
 import type { Note, ChecklistItem, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 
+/**
+ * Textarea that always wraps long text (no horizontal scrolling) and grows
+ * vertically to fit its content, standing in for single-line text inputs.
+ */
+function AutoGrowTextarea({
+  value,
+  onChange,
+  className,
+  ariaLabel,
+  onKeyDown,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  className?: string;
+  ariaLabel: string;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+}) {
+  const resize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  return (
+    <textarea
+      aria-label={ariaLabel}
+      className={`${className || ''} resize-none overflow-hidden whitespace-pre-wrap break-words`}
+      rows={1}
+      value={value}
+      ref={resize}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
 export function ChecklistEditorPage() {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
@@ -129,6 +165,18 @@ export function ChecklistEditorPage() {
     }
   };
 
+  const handleColorSelect = async (c: NoteColor) => {
+    setColor(c);
+    // Persist immediately so the pick survives backing out without saving.
+    if (note) {
+      try {
+        await NoteRepository.update(note.id, { color: c });
+      } catch (err) {
+        console.error('Failed to update checklist color:', err);
+      }
+    }
+  };
+
   const colorOptions: NoteColor[] = ['default', 'orange', 'teal', 'red', 'purple', 'blue'];
   const colorBgMap: Record<NoteColor, string> = {
     default: 'bg-surface-container-high',
@@ -212,18 +260,18 @@ export function ChecklistEditorPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-            <div className="flex items-center justify-between mt-sm">
+            <div className="mt-sm">
               <p className="font-label-sm text-label-sm text-on-surface-variant">
                 {formatDate(note?.createdAt)} • {items.length} items • {completedItems.length} completed
               </p>
               {/* Color Dot Selector */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-4">
                 {colorOptions.map(c => (
                   <button
                     key={c}
                     aria-label={`${c} color`}
                     className={`w-6 h-6 rounded-full ${colorBgMap[c]} border-2 ${color === c ? 'border-primary' : 'border-transparent'} transition-all`}
-                    onClick={() => setColor(c)}
+                    onClick={() => handleColorSelect(c)}
                   />
                 ))}
               </div>
@@ -245,10 +293,9 @@ export function ChecklistEditorPage() {
                   className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center cursor-pointer transition-all hover:border-primary shrink-0"
                   onClick={() => handleToggleItem(item.id, item.isCompleted)}
                 />
-                <input
-                  aria-label="Checklist item"
-                  className="flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 font-body-md text-on-background"
-                  type="text"
+                <AutoGrowTextarea
+                  ariaLabel="Checklist item"
+                  className="checklist-item-text flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 font-body-md text-on-background"
                   value={item.text}
                   onChange={(e) => handleUpdateItemText(item.id, e.target.value)}
                   onKeyDown={(e) => {
@@ -309,10 +356,9 @@ export function ChecklistEditorPage() {
                     >
                       <span className="material-symbols-outlined text-[16px] text-on-primary" style={{ fontVariationSettings: "'wght' 700" }}>check</span>
                     </button>
-                    <input
-                      aria-label="Checklist item"
-                      className="flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 font-body-md text-on-surface-variant line-through"
-                      type="text"
+                    <AutoGrowTextarea
+                      ariaLabel="Checklist item"
+                      className="checklist-item-text flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 font-body-md text-on-surface-variant line-through"
                       value={item.text}
                       onChange={(e) => handleUpdateItemText(item.id, e.target.value)}
                     />

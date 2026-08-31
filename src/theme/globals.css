@@ -95,6 +95,11 @@
   --color-note-indigo: #1e1b4b;
   --color-note-slate: #3f3f46;
 
+  /* Folder theme colors (referenced as var(--color-<name>) by folder cards) */
+  --color-coral: #d97721;
+  --color-amber: #ffb783;
+  --color-lavender: #8083ff;
+
   /* Typography scale (see DESIGN.md) */
   --text-display-lg: 36px;
   --text-display-lg--line-height: 44px;
@@ -288,6 +293,11 @@
   --color-note-indigo: #E0F2FE;
   --color-note-slate: #F4F4F5;
   --color-primary-fixed: #494bd6;
+
+  /* Folder theme colors (light theme) */
+  --color-coral: #f3b08c;
+  --color-amber: #e5a44f;
+  --color-lavender: #9a9cff;
 }
 
 [data-font-size='small'] {
