@@ -3,7 +3,8 @@ import { getDatabase } from '@/database/connection';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { EventRepository } from '@/database/repositories/EventRepository';
-import { SaveFile } from '@/plugins/save-file';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 
 interface StorageStats {
@@ -71,19 +72,26 @@ export function BackupPage() {
       const dateStr = new Date().toISOString().split('T')[0];
       const fileName = `localnote-backup-${dateStr}.json`;
 
-      // Let the user choose where to save the file. On native this opens the
-      // Android Storage Access Framework "Save As" dialog; on web it falls
-      // back to a normal browser download.
-      const res = await SaveFile.saveFile({
-        fileName,
+      // Simple, reliable, cross-platform: write the backup to the app's
+      // cache as a temp file, then open the native share sheet so the user
+      // can save it anywhere (Drive, Files, email, etc.). Uses only the
+      // official @capacitor/filesystem + @capacitor/share plugins — no custom
+      // native code required.
+      const written = await Filesystem.writeFile({
+        path: fileName,
         data: jsonStr,
-        mimeType: 'application/json',
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
       });
 
-      setMessage({
-        text: `Backup exported successfully! Saved to: ${res.uri}`,
-        type: 'success',
+      await Share.share({
+        title: fileName,
+        text: `Backup of your LocalNote data (${dateStr})`,
+        files: [written.uri],
+        dialogTitle: 'Save or share your backup',
       });
+
+      setMessage({ text: `Backup exported successfully! ${fileName}`, type: 'success' });
     } catch (err: any) {
       console.error('Export error:', err);
       setMessage({ text: `Export failed: ${err.message}`, type: 'error' });
