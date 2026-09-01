@@ -201,6 +201,7 @@
 
 .list-item-content {
   flex: 1;
+  min-width: 0;
   margin-left: var(--space-sm);
 }
 
@@ -212,6 +213,11 @@
 }
 
 .list-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 16px;
   font-weight: 700;
   color: var(--color-on-surface);
@@ -220,6 +226,10 @@
 }
 
 .list-item-time {
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 13px;
   color: var(--color-on-surface-variant);
   white-space: nowrap;
@@ -242,6 +252,15 @@
   gap: var(--space-sm);
   font-size: 13px;
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.list-item-badge span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .list-divider {
