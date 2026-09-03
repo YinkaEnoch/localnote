@@ -62,19 +62,28 @@ const requestPermissionIfNeeded = async (): Promise<boolean> => {
  * Schedules reminder notifications for an event and records them in the
  * reminders table. Replaces any previously scheduled reminders for the event.
  *
- * By default a single reminder is scheduled for the event's start date. When
- * the event has selected weekdays (`reminderDays`, 0 = Sunday … 6 = Saturday)
- * the reminder fires on every matching weekday within [startDate, endDate],
- * at the same time of day as the start date.
+ * Each selected offset in `event.reminders` fires its own alert at the
+ * corresponding time before the anchor. When the event has selected weekdays
+ * (`reminderDays`, 0 = Sunday … 6 = Saturday) the reminders fire on every
+ * matching weekday within [startDate, endDate], at the same time of day as
+ * the start date.
  *
- * Returns the scheduled notification ids (empty when there is nothing to
- * schedule: no reminder, all times past, web platform, or missing permission).
+ * Returns the scheduled notification id of the first alert (empty when there
+ * is nothing to schedule: no reminder, all times past, web platform, or
+ * missing permission).
  */
 const MAX_SCHEDULED_REMINDERS = 64; // Android caps pending alarms; stay safely below it
 
 export const scheduleEventReminder = async (event: Event): Promise<number | null> => {
   if (Capacitor.getPlatform() === 'web') return null;
-  if (event.reminder === 'none') {
+
+  // Every selected offset schedules one separate alert. Empty selection is
+  // treated as "no reminder" (previous 'none' behaviour).
+  const offsets = (Array.isArray(event.reminders) ? event.reminders : [])
+    .filter((o): o is ReminderOffset => o !== 'none' && OFFSET_MINUTES[o] !== undefined)
+    .filter((o, i, arr) => arr.indexOf(o) === i); // dedupe
+
+  if (offsets.length === 0) {
     await cancelEventReminder(event.id);
     return null;
   }
@@ -106,11 +115,22 @@ export const scheduleEventReminder = async (event: Event): Promise<number | null
     }
   }
 
-  const remindAts = anchorDates
-    .map((at) => new Date(at.getTime() - OFFSET_MINUTES[event.reminder] * 60_000))
-    .filter((remindAt) => remindAt.getTime() > Date.now());
+  // One entry per (anchor date x selected offset), future-only and sorted by
+  // fire time. Capped total to stay safely below the Android pending-alarm
+  // limit when multiple offsets are combined with many recurring weekdays.
+  const entries: { remindAt: Date; offset: ReminderOffset }[] = [];
+  for (const offset of offsets) {
+    for (const at of anchorDates) {
+      const remindAt = new Date(at.getTime() - OFFSET_MINUTES[offset] * 60_000);
+      if (remindAt.getTime() > Date.now()) {
+        entries.push({ remindAt, offset });
+      }
+    }
+  }
+  entries.sort((a, b) => a.remindAt.getTime() - b.remindAt.getTime());
+  const capped = entries.slice(0, MAX_SCHEDULED_REMINDERS);
 
-  if (remindAts.length === 0) return null;
+  if (capped.length === 0) return null;
   const granted = await requestPermissionIfNeeded();
   if (!granted) return null;
 
@@ -126,23 +146,19 @@ export const scheduleEventReminder = async (event: Event): Promise<number | null
     }
   }
 
-  const notifications = remindAts.map((remindAt, index) => ({
-    id: notificationIdFor(`${event.id}#${index}`),
+  const showWeekday = anchorDates.length > 1;
+  const notifications = capped.map(({ remindAt, offset }, index) => ({
+    // Include the offset in the id so each selected reminder gets its own,
+    // stable notification id.
+    id: notificationIdFor(`${event.id}#${offset}#${index}`),
     title: event.title || 'Event reminder',
-    body: `Starts at ${remindAts.length > 1
-      ? new Date(remindAt.getTime() + OFFSET_MINUTES[event.reminder] * 60_000).toLocaleString([], {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : new Date(remindAt.getTime() + OFFSET_MINUTES[event.reminder] * 60_000).toLocaleString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-          day: 'numeric',
-          month: 'short',
-        })}`,
+    body: `Starts at ${new Date(remindAt.getTime() + OFFSET_MINUTES[offset] * 60_000).toLocaleString([], {
+      weekday: showWeekday ? 'short' : undefined,
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`,
     schedule: { at: remindAt, allowWhileIdle: true },
     smallIcon: 'ic_launcher',
     largeIcon: 'ic_launcher_round',
@@ -151,11 +167,11 @@ export const scheduleEventReminder = async (event: Event): Promise<number | null
 
   await LocalNotifications.schedule({ notifications });
 
-  for (let i = 0; i < remindAts.length; i++) {
+  for (let i = 0; i < capped.length; i++) {
     await ReminderRepository.create({
       parentId: event.id,
       parentType: 'event',
-      remindAt: remindAts[i].toISOString(),
+      remindAt: capped[i].remindAt.toISOString(),
       notificationId: notifications[i].id,
     });
   }

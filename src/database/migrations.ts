@@ -97,6 +97,19 @@ const MIGRATIONS = [
       // the start date only" (previous behaviour).
       `ALTER TABLE events ADD COLUMN reminder_days TEXT NOT NULL DEFAULT '[]';`
     ]
+  },
+  {
+    version: 4,
+    up: [
+      // Multiple reminders per event. JSON array of `ReminderOffset` values
+      // (e.g. '["10min","30min"]'); '[]' means "no reminder". The legacy
+      // single-`reminder` column is kept for backward compatibility and gets
+      // backfilled below.
+      `ALTER TABLE events ADD COLUMN reminders TEXT NOT NULL DEFAULT '[]';`,
+      // Backfill existing single-offset reminders into the new array column
+      // (string concatenation avoids relying on the JSON1 extension).
+      `UPDATE events SET reminders = '["' || reminder || '"]' WHERE reminder IS NOT NULL AND reminder <> '' AND reminder <> 'none';`
+    ]
   }
 ];
 

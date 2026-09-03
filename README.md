@@ -23,7 +23,7 @@
 
 - Monthly calendar view with day-level detail
 - Create events with start/end times, all-day support, and descriptions
-- Optional **reminders** with configurable offsets (5 min → 1 day) that fire as native local notifications
+- Optional **reminders** — pick one or more offsets per event (e.g. 5 min + 30 min before) that each fire a native local notification at the appointed time
 - Optional **long alarm** sound for important events (Android)
 - Links support on events
 

@@ -2,13 +2,17 @@ import { getDatabase } from '../connection';
 import type { Event, SortOption, ReminderOffset, EventSound, NoteColor } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
 
+/** Valid, selectable reminder offsets (excluding the legacy 'none'). */
+const REMINDER_OFFSETS: ReminderOffset[] = ['5min', '10min', '15min', '30min', '1hr', '1day'];
+
 interface EventRow {
   id: string;
   title: string;
   start_date: string;
   end_date: string | null;
   all_day: number;
-  reminder: string;
+  reminder: string; // legacy single-offset column (kept for backward compat)
+  reminders: string; // JSON array of selected offsets
   sound: string;
   reminder_days: string;
   description: string;
@@ -19,13 +23,31 @@ interface EventRow {
   updated_at: string;
 }
 
+const parseReminders = (value: string | undefined | null, legacy: string | undefined | null): ReminderOffset[] => {
+  let parsed: unknown = [];
+  try {
+    parsed = JSON.parse(value || '[]');
+  } catch {
+    parsed = [];
+  }
+  const result = Array.isArray(parsed)
+    ? parsed.filter((v): v is ReminderOffset => REMINDER_OFFSETS.includes(v as ReminderOffset))
+    : [];
+  // Fall back to the legacy single offset when the array is empty but a real
+  // (non-'none') reminder was recorded.
+  if (result.length === 0 && legacy && legacy !== 'none' && REMINDER_OFFSETS.includes(legacy as ReminderOffset)) {
+    result.push(legacy as ReminderOffset);
+  }
+  return result;
+};
+
 const mapRowToEvent = (row: EventRow): Event => ({
   id: row.id,
   title: row.title,
   startDate: row.start_date,
   endDate: row.end_date,
   allDay: Boolean(row.all_day),
-  reminder: row.reminder as ReminderOffset,
+  reminders: parseReminders(row.reminders, row.reminder),
   sound: (row.sound as EventSound) || 'default',
   reminderDays: parseReminderDays(row.reminder_days),
   description: row.description,
@@ -95,17 +117,22 @@ export class EventRepository {
     const db = await getDatabase();
     const id = uuidv4();
     const now = new Date().toISOString();
+    // Keep the legacy single-`reminder` column populated with a representative
+    // offset so older app versions / imports that read it still see something.
+    const reminders = REMINDER_OFFSETS.filter((o) => event.reminders?.includes(o));
+    const primaryReminder = reminders[reminders.length - 1] || 'none';
 
     await db.run(
-      `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, sound, reminder_days, description, links, color, folder_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, reminders, sound, reminder_days, description, links, color, folder_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         id,
         event.title,
         event.startDate,
         event.endDate,
         event.allDay ? 1 : 0,
-        event.reminder,
+        primaryReminder,
+        JSON.stringify(reminders),
         event.sound,
         JSON.stringify(event.reminderDays ?? []),
         event.description,
@@ -120,6 +147,7 @@ export class EventRepository {
     return {
       id,
       ...event,
+      reminders,
       createdAt: now,
       updatedAt: now,
     };
@@ -139,17 +167,20 @@ export class EventRepository {
       ...data,
       updatedAt: now,
     };
+    const reminders = REMINDER_OFFSETS.filter((o) => updated.reminders?.includes(o));
+    const primaryReminder = reminders[reminders.length - 1] || 'none';
 
     await db.run(
       `UPDATE events
-       SET title = ?, start_date = ?, end_date = ?, all_day = ?, reminder = ?, sound = ?, reminder_days = ?, description = ?, links = ?, color = ?, folder_id = ?, updated_at = ?
+       SET title = ?, start_date = ?, end_date = ?, all_day = ?, reminder = ?, reminders = ?, sound = ?, reminder_days = ?, description = ?, links = ?, color = ?, folder_id = ?, updated_at = ?
        WHERE id = ?;`,
       [
         updated.title,
         updated.startDate,
         updated.endDate,
         updated.allDay ? 1 : 0,
-        updated.reminder,
+        primaryReminder,
+        JSON.stringify(reminders),
         updated.sound,
         JSON.stringify(updated.reminderDays ?? []),
         updated.description,
@@ -161,7 +192,7 @@ export class EventRepository {
       ]
     );
 
-    return updated;
+    return { ...updated, reminders };
   }
 
   static async remove(id: string): Promise<void> {

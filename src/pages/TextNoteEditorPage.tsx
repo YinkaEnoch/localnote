@@ -86,7 +86,7 @@ export function TextNoteEditorPage() {
       startDate: new Date().toISOString(),
       endDate: null,
       allDay: false,
-      reminder: '10min',
+      reminders: ['10min'],
       sound: 'default',
       reminderDays: [],
       description: plainText,

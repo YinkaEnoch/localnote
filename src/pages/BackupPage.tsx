@@ -152,19 +152,22 @@ export function BackupPage() {
           );
         }
 
-        // Insert Events (sound/reminder_days default for older backups)
+        // Insert Events (sound/reminder_days/reminders default for older backups)
         interface BackupEventRow {
           id: string; title: string; start_date: string; end_date: string | null;
-          all_day: number; reminder: string; sound?: string; reminder_days?: string;
+          all_day: number; reminder: string; reminders?: string; sound?: string; reminder_days?: string;
           description: string; links: string; color: string; folder_id: string | null;
           created_at: string; updated_at: string;
         }
         for (const ev of (backup.data.events || []) as BackupEventRow[]) {
           await db.run(
-            `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, sound, reminder_days, description, links, color, folder_id, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            `INSERT INTO events (id, title, start_date, end_date, all_day, reminder, reminders, sound, reminder_days, description, links, color, folder_id, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
             [
               ev.id, ev.title, ev.start_date, ev.end_date, ev.all_day, ev.reminder,
+              // Newer backups carry a `reminders` JSON array; older ones fall
+              // back to wrapping the legacy single `reminder` value.
+              ev.reminders || (ev.reminder && ev.reminder !== 'none' ? `["${ev.reminder}"]` : '[]'),
               ev.sound || 'default',
               ev.reminder_days || '[]',
               ev.description, ev.links, ev.color, ev.folder_id, ev.created_at, ev.updated_at,

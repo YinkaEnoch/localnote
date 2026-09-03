@@ -25,7 +25,7 @@ export function EventEditorPage() {
   const [startDate, setStartDate] = useState(`${initialDateStr}T09:00`);
   const [endDate, setEndDate] = useState(`${initialDateStr}T10:00`);
   
-  const [reminder, setReminder] = useState<ReminderOffset>('10min');
+  const [reminders, setReminders] = useState<ReminderOffset[]>(['10min']);
   const [sound, setSound] = useState<EventSound>('default');
   const [reminderDays, setReminderDays] = useState<number[]>([]);
   const [description, setDescription] = useState('');
@@ -67,7 +67,7 @@ export function EventEditorPage() {
         setAllDay(e.allDay);
         setStartDate(e.startDate.slice(0, 16));
         setEndDate(e.endDate ? e.endDate.slice(0, 16) : `${e.startDate.slice(0, 10)}T10:00`);
-        setReminder(e.reminder);
+        setReminders(e.reminders || []);
         setSound(e.sound || 'default');
         setReminderDays(e.reminderDays || []);
         setDescription(e.description || '');
@@ -89,7 +89,8 @@ export function EventEditorPage() {
       startDate: new Date(startDate).toISOString(),
       endDate: endDate ? new Date(endDate).toISOString() : null,
       allDay,
-      reminder,
+      // Per-offset reminders are stored as a JSON array; empty = no reminder.
+      reminders: REMINDER_OPTIONS.filter((o) => reminders.includes(o)),
       sound,
       reminderDays: reminderDays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
       description,
@@ -105,7 +106,7 @@ export function EventEditorPage() {
       } else {
         savedEvent = await EventRepository.create(payload);
       }
-      console.log('[EventEditor] saved event:', savedEvent.id, 'start:', savedEvent.startDate, 'reminder:', savedEvent.reminder);
+      console.log('[EventEditor] saved event:', savedEvent.id, 'start:', savedEvent.startDate, 'reminders:', savedEvent.reminders);
       // Reminder scheduling must NOT block saving/navigation — a notification
       // plugin hiccup (permission dialog, exact-alarm denial on some ROMs)
       // should only be logged, never break the persist or show a false error.
@@ -176,14 +177,27 @@ export function EventEditorPage() {
     }
   };
 
-  const reminderLabels: Record<ReminderOffset, string> = {
-    none: 'None',
+  const REMINDER_OPTIONS: Exclude<ReminderOffset, 'none'>[] = ['5min', '10min', '15min', '30min', '1hr', '1day'];
+
+  const reminderLabels: Record<Exclude<ReminderOffset, 'none'>, string> = {
     '5min': '5 minutes before',
     '10min': '10 minutes before',
     '15min': '15 minutes before',
     '30min': '30 minutes before',
     '1hr': '1 hour before',
     '1day': '1 day before',
+  };
+
+  const reminderSummary = (offsets: ReminderOffset[]): string => {
+    const selected = REMINDER_OPTIONS.filter((o) => offsets.includes(o));
+    if (selected.length === 0) return 'None';
+    return selected.map((o) => reminderLabels[o]).join(', ');
+  };
+
+  const toggleReminder = (offset: ReminderOffset) => {
+    setReminders(prev =>
+      prev.includes(offset) ? prev.filter((o) => o !== offset) : [...prev, offset]
+    );
   };
 
   const formatDateLabel = (isoDateStr: string) => {
@@ -403,30 +417,40 @@ export function EventEditorPage() {
           >
             <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
             <div className="flex-1">
-              <span className="block font-body-md text-body-md text-on-background">
-                {reminderLabels[reminder]}
+              <span className={`block font-body-md text-body-md ${reminders.length ? 'text-on-background' : 'text-on-surface-variant'}`}>
+                {reminderSummary(reminders)}
+              </span>
+              <span className="block font-label-sm text-label-sm text-on-surface-variant/80">
+                Pick one or more
               </span>
             </div>
             <span className="material-symbols-outlined text-on-surface-variant">expand_more</span>
           </button>
 
           {isReminderMenuOpen && (
-            <div className="absolute top-full left-0 mt-1 w-64 bg-surface-container-high rounded-xl shadow-xl py-2 z-40 border border-outline-variant/30">
-              {(Object.keys(reminderLabels) as ReminderOffset[]).map((key) => (
-                <button
-                  key={key}
-                  className={`w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center justify-between text-body-md ${
-                    reminder === key ? 'text-primary font-medium' : 'text-on-surface'
-                  }`}
-                  onClick={() => {
-                    setReminder(key);
-                    setIsReminderMenuOpen(false);
-                  }}
-                >
-                  <span>{reminderLabels[key]}</span>
-                  {reminder === key && <span className="material-symbols-outlined text-[18px]">check</span>}
-                </button>
-              ))}
+            <div className="absolute top-full left-0 mt-1 w-64 bg-surface-container-high rounded-xl shadow-xl py-2 z-40 border border-outline-variant/30 max-h-80 overflow-y-auto">
+              {REMINDER_OPTIONS.map((key) => {
+                const isSelected = reminders.includes(key);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={isSelected}
+                    className={`w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-3 text-body-md ${
+                      isSelected ? 'text-primary font-medium' : 'text-on-surface'
+                    }`}
+                    onClick={() => toggleReminder(key)}
+                  >
+                    <span
+                      className="material-symbols-outlined text-[18px]"
+                      style={{ fontVariationSettings: isSelected ? "'FILL' 1" : undefined }}
+                    >
+                      {isSelected ? 'check_box' : 'check_box_outline_blank'}
+                    </span>
+                    <span>{reminderLabels[key]}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

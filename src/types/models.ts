@@ -36,7 +36,7 @@ export interface Event {
   startDate: string; // ISO 8601
   endDate: string | null;
   allDay: boolean;
-  reminder: ReminderOffset;
+  reminders: ReminderOffset[]; // one alert fires at each selected offset before the event
   sound: EventSound; // notification/alarm sound to use for the reminder
   reminderDays: number[]; // weekdays (0=Sun..6=Sat) to remind on within [startDate, endDate]; empty = start date only
   description: string;
