@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { DatabaseProvider } from '@/database/DatabaseProvider';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { AndroidBackHandler } from '@/hooks/useAndroidBackHandler';
 
 /**
  * Code-split page modules so the heavy editor pages (TipTap, dnd-kit) are only
@@ -37,6 +38,8 @@ export function App() {
     <ThemeProvider>
       <DatabaseProvider>
         <BrowserRouter>
+          {/* Android: system back button should navigate, not close the app. */}
+          <AndroidBackHandler />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route element={<AppLayout />}>
