@@ -3,7 +3,6 @@ import { useClickOutside } from '@/hooks/useClickOutside';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
-import { NoteRepository } from '@/database/repositories/NoteRepository';
 import type { Event, NoteColor, ReminderOffset, EventSound } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
@@ -128,23 +127,6 @@ export function EventEditorPage() {
     }
   };
 
-  const handleConvertToNote = async () => {
-    if (!event) return;
-    try {
-      const note = await NoteRepository.create({
-        title: title || 'Untitled Note',
-        content: description ? `<p>${description.replace(/\n/g, '<br/>')}</p>` : '',
-        type: 'text',
-        color,
-        folderId,
-        eventId: event.id,
-      });
-      navigate(`/note/${note.id}`);
-    } catch (err) {
-      console.error('Failed to convert event to note:', err);
-    }
-  };
-
   const colorOptions: NoteColor[] = ['default', 'red', 'orange', 'teal', 'purple', 'blue'];
   const colorBgMap: Record<NoteColor, string> = {
     default: 'bg-surface-container',
@@ -252,22 +234,13 @@ export function EventEditorPage() {
                   Move to Folder
                 </button>
                 {!isNew && (
-                  <>
-                    <button
-                      className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2"
-                      onClick={() => { handleConvertToNote(); setIsMenuOpen(false); }}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">description</span>
-                      Convert to Note
-                    </button>
-                    <button
-                      className="w-full text-left px-4 py-2 hover:bg-surface-container-highest text-error flex items-center gap-2"
-                      onClick={() => { setConfirmDeleteOpen(true); setIsMenuOpen(false); }}
-                    >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
-                      Delete Event
-                    </button>
-                  </>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-surface-container-highest text-error flex items-center gap-2"
+                    onClick={() => { setConfirmDeleteOpen(true); setIsMenuOpen(false); }}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                    Delete Event
+                  </button>
                 )}
               </div>
             )}
@@ -526,24 +499,14 @@ export function EventEditorPage() {
         </div>
         <div className="flex justify-around items-center h-16 px-gutter pb-safe w-full max-w-[800px] mx-auto text-base">
           {!isNew && (
-            <>
-              <button
-                aria-label="Convert to Note"
-                className="w-12 h-12 flex flex-col items-center justify-center text-on-surface-variant hover:text-on-background hover:bg-surface-container rounded-full transition-all duration-200"
-                onClick={handleConvertToNote}
-                title="Convert to Note"
-              >
-                <span className="material-symbols-outlined">description</span>
-              </button>
-              <button
-                aria-label="Delete Event"
-                className="w-12 h-12 flex flex-col items-center justify-center text-on-surface-variant hover:text-error hover:bg-surface-container rounded-full transition-all duration-200"
-                onClick={() => setConfirmDeleteOpen(true)}
-                title="Delete Event"
-              >
-                <span className="material-symbols-outlined">delete</span>
-              </button>
-            </>
+            <button
+              aria-label="Delete Event"
+              className="w-12 h-12 flex flex-col items-center justify-center text-on-surface-variant hover:text-error hover:bg-surface-container rounded-full transition-all duration-200"
+              onClick={() => setConfirmDeleteOpen(true)}
+              title="Delete Event"
+            >
+              <span className="material-symbols-outlined">delete</span>
+            </button>
           )}
         </div>
       </div>

@@ -7,7 +7,6 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
-import { EventRepository } from '@/database/repositories/EventRepository';
 import type { Note, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import './TextNoteEditorPage.css';
@@ -65,40 +64,6 @@ export function TextNoteEditorPage() {
     navigate(-1);
   };
 
-  const handleConvertToEvent = async () => {
-    const plainText = editor?.getText() || '';
-    let currentNote = note;
-    if (!currentNote) {
-      const content = editor?.getHTML() || '';
-      currentNote = await NoteRepository.create({
-        title: title || 'Untitled Note',
-        content,
-        color,
-        type: 'text',
-        folderId,
-        eventId: null,
-      });
-      setNote(currentNote);
-    }
-
-    const createdEvent = await EventRepository.create({
-      title: title || 'Untitled Note',
-      startDate: new Date().toISOString(),
-      endDate: null,
-      allDay: false,
-      reminders: ['10min'],
-      sound: 'default',
-      reminderDays: [],
-      description: plainText,
-      links: JSON.stringify([]),
-      color,
-      folderId,
-    });
-
-    await NoteRepository.update(currentNote.id, { eventId: createdEvent.id });
-    navigate(`/event/${createdEvent.id}`);
-  };
-
   const wordCount = editor?.state.doc.textContent.trim().split(/\s+/).filter(Boolean).length || 0;
   
   const formatDate = (dateString?: string) => {
@@ -150,10 +115,6 @@ export function TextNoteEditorPage() {
                 <button onClick={() => { setIsFolderModalOpen(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">folder</span>
                   Move to Folder
-                </button>
-                <button onClick={() => { handleConvertToEvent(); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">event</span>
-                  Convert to Event
                 </button>
                 <button onClick={handleDelete} className="w-full text-left px-4 py-2 hover:bg-surface-container-highest text-error flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">delete</span>
