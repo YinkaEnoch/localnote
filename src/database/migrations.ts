@@ -110,6 +110,23 @@ const MIGRATIONS = [
       // (string concatenation avoids relying on the JSON1 extension).
       `UPDATE events SET reminders = '["' || reminder || '"]' WHERE reminder IS NOT NULL AND reminder <> '' AND reminder <> 'none';`
     ]
+  },
+  {
+    version: 5,
+    up: [
+      // Note-tied reminders (notes + checklists). Unlike events, notes have no
+      // inherent start/end date, so the reminder carries its own date/time
+      // range. `reminder_offsets` is a JSON array of `ReminderOffset` values
+      // ('[]' = no reminder); `reminder_sound` is 'default' | 'long';
+      // `reminder_days` is a JSON array of weekday numbers (0 = Sun .. 6 = Sat,
+      // '[]' = start date only). `reminder_start` is the anchor date/time and
+      // `reminder_end` the optional end of the recurrence range.
+      `ALTER TABLE notes ADD COLUMN reminder_offsets TEXT NOT NULL DEFAULT '[]';`,
+      `ALTER TABLE notes ADD COLUMN reminder_sound TEXT NOT NULL DEFAULT 'default';`,
+      `ALTER TABLE notes ADD COLUMN reminder_days TEXT NOT NULL DEFAULT '[]';`,
+      `ALTER TABLE notes ADD COLUMN reminder_start TEXT;`,
+      `ALTER TABLE notes ADD COLUMN reminder_end TEXT;`
+    ]
   }
 ];
 

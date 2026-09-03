@@ -176,12 +176,27 @@ export function BackupPage() {
           );
         }
 
-        // Insert Notes
-        for (const n of backup.data.notes || []) {
+        // Insert Notes (reminder config columns default for older backups)
+        interface BackupNoteRow {
+          id: string; title: string; content: string; type: string; color: string;
+          folder_id: string | null; event_id: string | null;
+          reminder_offsets?: string; reminder_sound?: string; reminder_days?: string;
+          reminder_start?: string; reminder_end?: string;
+          created_at: string; updated_at: string;
+        }
+        for (const n of (backup.data.notes || []) as BackupNoteRow[]) {
           await db.run(
-            `INSERT INTO notes (id, title, content, type, color, folder_id, event_id, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-            [n.id, n.title, n.content, n.type, n.color, n.folder_id, n.event_id, n.created_at, n.updated_at],
+            `INSERT INTO notes (id, title, content, type, color, folder_id, event_id, reminder_offsets, reminder_sound, reminder_days, reminder_start, reminder_end, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            [
+              n.id, n.title, n.content, n.type, n.color, n.folder_id, n.event_id,
+              n.reminder_offsets || '[]',
+              n.reminder_sound || 'default',
+              n.reminder_days || '[]',
+              n.reminder_start ?? null,
+              n.reminder_end ?? null,
+              n.created_at, n.updated_at,
+            ],
             false
           );
         }

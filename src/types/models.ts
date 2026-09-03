@@ -16,6 +16,12 @@ export interface Note {
   color: NoteColor;
   folderId: string | null;
   eventId: string | null; // FK to events table when note is also an event
+  // Reminder (note-tied, not an Event). Empty offsets = no reminder.
+  reminderOffsets: ReminderOffset[]; // one alert fires at each selected offset before the reminder anchor
+  reminderSound: EventSound; // notification/alarm sound to use for the reminder
+  reminderDays: number[]; // weekdays (0=Sun..6=Sat) to remind on within [reminderStart, reminderEnd]; empty = start date only
+  reminderStart: string | null; // ISO 8601 anchor (date/time) for the reminder
+  reminderEnd: string | null; // ISO 8601 end of the reminder date range (optional)
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }

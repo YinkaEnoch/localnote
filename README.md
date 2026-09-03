@@ -12,12 +12,14 @@
   - Bold, italic, underline, strikethrough, code, blockquotes, lists, and inline links
   - Content stored as clean HTML in a local SQLite database
 - Color-coded labels for quick visual grouping
+- Optional **reminders** on any note (via the overflow menu) — set a date/time range, pick one or more offsets, choose the alarm sound, and repeat on specific weekdays within the range
 
 ### ✅ Checklists
 
 - Dedicated checklist editor with inline item management
 - Reorder items with **drag-and-drop** (`@dnd-kit`)
 - Track completion progress at a glance
+- Same optional **reminders** as notes — configure date/time range, multiple offsets, alarm sound, and weekday repeats
 
 ### 📅 Calendar &amp; Events
 

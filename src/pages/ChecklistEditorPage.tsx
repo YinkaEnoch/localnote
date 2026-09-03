@@ -6,6 +6,8 @@ import { ChecklistRepository } from '@/database/repositories/ChecklistRepository
 import type { Note, ChecklistItem, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
+import { ReminderModal, formatReminderSummary, type ReminderConfig } from '@/components/modals/ReminderModal';
+import { scheduleNoteReminder, cancelNoteReminder } from '@/services/reminderService';
 
 /**
  * Textarea that always wraps long text (no horizontal scrolling) and grows
@@ -56,6 +58,7 @@ export function ChecklistEditorPage() {
   const [newItemText, setNewItemText] = useState('');
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
@@ -100,6 +103,11 @@ export function ChecklistEditorPage() {
       color,
       folderId,
       eventId: null,
+      reminderOffsets: [],
+      reminderSound: 'default',
+      reminderDays: [],
+      reminderStart: null,
+      reminderEnd: null,
     });
     setNote(created);
     return created;
@@ -162,8 +170,46 @@ export function ChecklistEditorPage() {
 
   const handleDeleteNote = async () => {
     if (note) {
+      await cancelNoteReminder(note.id);
       await NoteRepository.remove(note.id);
       navigate('/', { replace: true });
+    }
+  };
+
+  const handleReminderSave = async (config: ReminderConfig) => {
+    try {
+      const current = await ensureNoteExists();
+      const updated = await NoteRepository.update(current.id, {
+        title: current.title,
+        color: current.color,
+        folderId: current.folderId,
+        ...config,
+      });
+      setNote(updated);
+      // Scheduling must not block saving — a notification plugin hiccup
+      // should only be logged, never break persistence.
+      scheduleNoteReminder(updated)
+        .then((notifId) => console.log('[Checklist] reminder scheduled, notificationId:', notifId))
+        .catch((err) => console.error('[Checklist] reminder scheduling failed (note still saved):', err));
+    } catch (err) {
+      console.error('Failed to save reminder:', err);
+    }
+  };
+
+  const handleReminderClear = async () => {
+    if (!note) return;
+    try {
+      await cancelNoteReminder(note.id);
+      const updated = await NoteRepository.update(note.id, {
+        reminderOffsets: [],
+        reminderSound: 'default',
+        reminderDays: [],
+        reminderStart: null,
+        reminderEnd: null,
+      });
+      setNote(updated);
+    } catch (err) {
+      console.error('Failed to clear reminder:', err);
     }
   };
 
@@ -233,6 +279,18 @@ export function ChecklistEditorPage() {
                 >
                   <span className="material-symbols-outlined text-[18px]">folder</span>
                   Move to Folder
+                </button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2"
+                  onClick={() => { setIsReminderModalOpen(true); setIsMenuOpen(false); }}
+                >
+                  <span className="material-symbols-outlined text-[18px]">alarm</span>
+                  <span className="flex-1">
+                    <span className="block">Reminder</span>
+                    <span className="block font-label-sm text-label-sm text-on-surface-variant">
+                      {formatReminderSummary(note ?? {})}
+                    </span>
+                  </span>
                 </button>
                 {note && (
                   <button
@@ -388,6 +446,16 @@ export function ChecklistEditorPage() {
           setIsFolderModalOpen(false);
         }}
         currentFolderId={folderId}
+      />
+
+      {/* Reminder Modal */}
+      <ReminderModal
+        isOpen={isReminderModalOpen}
+        title="Checklist"
+        initial={note ?? undefined}
+        onClose={() => setIsReminderModalOpen(false)}
+        onSave={handleReminderSave}
+        onClear={handleReminderClear}
       />
 
       <ConfirmDialog

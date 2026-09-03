@@ -1,6 +1,9 @@
 import { getDatabase } from '../connection';
-import type { Note, NoteListItem, SortOption, SearchScope, NoteType, NoteColor } from '@/types/models';
+import type { Note, NoteListItem, SortOption, SearchScope, NoteType, NoteColor, ReminderOffset, EventSound } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
+
+/** Valid, selectable reminder offsets (excluding the legacy 'none'). */
+const REMINDER_OFFSETS: ReminderOffset[] = ['5min', '10min', '15min', '30min', '1hr', '1day'];
 
 interface NoteRow {
   id: string;
@@ -10,12 +13,37 @@ interface NoteRow {
   color: string;
   folder_id: string | null;
   event_id: string | null;
+  reminder_offsets: string;
+  reminder_sound: string;
+  reminder_days: string;
+  reminder_start: string | null;
+  reminder_end: string | null;
   created_at: string;
   updated_at: string;
   checklist_total?: number;
   checklist_completed?: number;
   event_start_date?: string;
 }
+
+const parseReminderOffsets = (value: string | undefined | null): ReminderOffset[] => {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed)
+      ? parsed.filter((v): v is ReminderOffset => REMINDER_OFFSETS.includes(v as ReminderOffset))
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const parseReminderDays = (value: string | undefined | null): number[] => {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed.filter((d): d is number => typeof d === 'number') : [];
+  } catch {
+    return [];
+  }
+};
 
 const mapRowToNote = (row: NoteRow): Note => ({
   id: row.id,
@@ -25,6 +53,11 @@ const mapRowToNote = (row: NoteRow): Note => ({
   color: row.color as NoteColor,
   folderId: row.folder_id,
   eventId: row.event_id,
+  reminderOffsets: parseReminderOffsets(row.reminder_offsets),
+  reminderSound: (row.reminder_sound as EventSound) || 'default',
+  reminderDays: parseReminderDays(row.reminder_days),
+  reminderStart: row.reminder_start,
+  reminderEnd: row.reminder_end,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -107,14 +140,27 @@ export class NoteRepository {
     const now = new Date().toISOString();
     
     await db.run(
-      `INSERT INTO notes (id, title, content, type, color, folder_id, event_id, created_at, updated_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      [id, note.title, note.content, note.type, note.color, note.folderId, note.eventId, now, now]
+      `INSERT INTO notes (id, title, content, type, color, folder_id, event_id, reminder_offsets, reminder_sound, reminder_days, reminder_start, reminder_end, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      [
+        id, note.title, note.content, note.type, note.color, note.folderId, note.eventId,
+        JSON.stringify(note.reminderOffsets ?? []),
+        note.reminderSound || 'default',
+        JSON.stringify(note.reminderDays ?? []),
+        note.reminderStart ?? null,
+        note.reminderEnd ?? null,
+        now, now,
+      ]
     );
 
     return {
       id,
       ...note,
+      reminderOffsets: note.reminderOffsets ?? [],
+      reminderSound: note.reminderSound || 'default',
+      reminderDays: note.reminderDays ?? [],
+      reminderStart: note.reminderStart ?? null,
+      reminderEnd: note.reminderEnd ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -122,7 +168,7 @@ export class NoteRepository {
 
   static async update(
     id: string, 
-    data: Partial<Pick<Note, 'title' | 'content' | 'color' | 'folderId' | 'eventId'>>
+    data: Partial<Pick<Note, 'title' | 'content' | 'color' | 'folderId' | 'eventId' | 'reminderOffsets' | 'reminderSound' | 'reminderDays' | 'reminderStart' | 'reminderEnd'>>
   ): Promise<Note> {
     const db = await getDatabase();
     const current = await this.getById(id);
@@ -132,14 +178,27 @@ export class NoteRepository {
     const updated: Note = {
       ...current,
       ...data,
+      reminderOffsets: data.reminderOffsets ?? current.reminderOffsets,
+      reminderSound: data.reminderSound ?? current.reminderSound,
+      reminderDays: data.reminderDays ?? current.reminderDays,
+      reminderStart: data.reminderStart !== undefined ? data.reminderStart : current.reminderStart,
+      reminderEnd: data.reminderEnd !== undefined ? data.reminderEnd : current.reminderEnd,
       updatedAt: now,
     };
 
     await db.run(
       `UPDATE notes 
-       SET title = ?, content = ?, color = ?, folder_id = ?, event_id = ?, updated_at = ?
+       SET title = ?, content = ?, color = ?, folder_id = ?, event_id = ?, reminder_offsets = ?, reminder_sound = ?, reminder_days = ?, reminder_start = ?, reminder_end = ?, updated_at = ?
        WHERE id = ?;`,
-      [updated.title, updated.content, updated.color, updated.folderId, updated.eventId, now, id]
+      [
+        updated.title, updated.content, updated.color, updated.folderId, updated.eventId,
+        JSON.stringify(updated.reminderOffsets),
+        updated.reminderSound,
+        JSON.stringify(updated.reminderDays),
+        updated.reminderStart,
+        updated.reminderEnd,
+        now, id,
+      ]
     );
 
     return updated;

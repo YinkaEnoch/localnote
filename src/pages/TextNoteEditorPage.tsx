@@ -9,6 +9,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import type { Note, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
+import { ReminderModal, formatReminderSummary, type ReminderConfig } from '@/components/modals/ReminderModal';
+import { scheduleNoteReminder, cancelNoteReminder } from '@/services/reminderService';
 import './TextNoteEditorPage.css';
 
 export function TextNoteEditorPage() {
@@ -20,6 +22,7 @@ export function TextNoteEditorPage() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [folderId, setFolderId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
 
@@ -52,16 +55,69 @@ export function TextNoteEditorPage() {
     if (note) {
       await NoteRepository.update(note.id, { title, content, color, folderId });
     } else {
-      await NoteRepository.create({ title, content, color, type: 'text', folderId, eventId: null });
+      await NoteRepository.create({ title, content, color, type: 'text', folderId, eventId: null, reminderOffsets: [], reminderSound: 'default', reminderDays: [], reminderStart: null, reminderEnd: null });
     }
     navigate(-1);
   };
 
   const handleDelete = async () => {
     if (note) {
+      await cancelNoteReminder(note.id);
       await NoteRepository.remove(note.id);
     }
     navigate(-1);
+  };
+
+  /** Persists the note immediately so reminder config can be attached to it. */
+  const ensureNoteExists = async (): Promise<Note> => {
+    if (note) return note;
+    const created = await NoteRepository.create({
+      title: title || 'Untitled Note',
+      content: editor?.getHTML() || '',
+      color,
+      type: 'text',
+      folderId,
+      eventId: null,
+      reminderOffsets: [],
+      reminderSound: 'default',
+      reminderDays: [],
+      reminderStart: null,
+      reminderEnd: null,
+    });
+    setNote(created);
+    return created;
+  };
+
+  const handleReminderSave = async (config: ReminderConfig) => {
+    try {
+      const current = await ensureNoteExists();
+      const updated = await NoteRepository.update(current.id, config);
+      setNote(updated);
+      // Scheduling must not block saving — a notification plugin hiccup
+      // should only be logged, never break persistence.
+      scheduleNoteReminder(updated)
+        .then((notifId) => console.log('[TextNote] reminder scheduled, notificationId:', notifId))
+        .catch((err) => console.error('[TextNote] reminder scheduling failed (note still saved):', err));
+    } catch (err) {
+      console.error('Failed to save reminder:', err);
+    }
+  };
+
+  const handleReminderClear = async () => {
+    if (!note) return;
+    try {
+      await cancelNoteReminder(note.id);
+      const updated = await NoteRepository.update(note.id, {
+        reminderOffsets: [],
+        reminderSound: 'default',
+        reminderDays: [],
+        reminderStart: null,
+        reminderEnd: null,
+      });
+      setNote(updated);
+    } catch (err) {
+      console.error('Failed to clear reminder:', err);
+    }
   };
 
   const wordCount = editor?.state.doc.textContent.trim().split(/\s+/).filter(Boolean).length || 0;
@@ -115,6 +171,15 @@ export function TextNoteEditorPage() {
                 <button onClick={() => { setIsFolderModalOpen(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">folder</span>
                   Move to Folder
+                </button>
+                <button onClick={() => { setIsReminderModalOpen(true); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-surface-container-highest flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[18px]">alarm</span>
+                  <span className="flex-1">
+                    <span className="block">Reminder</span>
+                    <span className="block font-label-sm text-label-sm text-on-surface-variant">
+                      {formatReminderSummary(note ?? {})}
+                    </span>
+                  </span>
                 </button>
                 <button onClick={handleDelete} className="w-full text-left px-4 py-2 hover:bg-surface-container-highest text-error flex items-center gap-2">
                   <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -192,6 +257,15 @@ export function TextNoteEditorPage() {
         onClose={() => setIsFolderModalOpen(false)} 
         onSelect={(fid) => { setFolderId(fid); setIsFolderModalOpen(false); }}
         currentFolderId={folderId}
+      />
+
+      <ReminderModal
+        isOpen={isReminderModalOpen}
+        title="Note"
+        initial={note ?? undefined}
+        onClose={() => setIsReminderModalOpen(false)}
+        onSave={handleReminderSave}
+        onClear={handleReminderClear}
       />
     </div>
   );
