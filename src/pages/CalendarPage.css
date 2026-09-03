@@ -276,3 +276,47 @@
 .add-event-btn:hover {
   background-color: var(--color-surface-container);
 }
+
+.reminders-section {
+  margin-top: var(--spacing-xl);
+  border-top: 1px solid var(--color-surface-variant);
+  padding-top: var(--spacing-md);
+}
+
+.reminders-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-headline-sm);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-on-background);
+  margin: 0 0 var(--spacing-md);
+}
+
+.reminders-title .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+.reminders-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.reminder-item {
+  border-color: var(--color-outline-variant);
+}
+
+.reminder-icon {
+  background-color: rgba(192, 193, 255, 0.12);
+  color: var(--color-primary);
+}
+
+.reminders-empty {
+  padding: var(--spacing-md);
+  color: var(--color-on-surface-variant);
+  text-align: center;
+  font-style: italic;
+}

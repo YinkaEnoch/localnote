@@ -40,6 +40,15 @@ export class ReminderRepository {
     return (res.values || []).map(mapRowToReminder);
   }
 
+  static async getByDateRange(startDate: string, endDate: string): Promise<Reminder[]> {
+    const db = await getDatabase();
+    const res = await db.query(
+      'SELECT * FROM reminders WHERE remind_at >= ? AND remind_at <= ? ORDER BY remind_at ASC;',
+      [startDate, endDate]
+    );
+    return (res.values || []).map(mapRowToReminder);
+  }
+
   static async create(reminder: Omit<Reminder, 'id' | 'createdAt'>): Promise<Reminder> {
     const db = await getDatabase();
     const id = uuidv4();

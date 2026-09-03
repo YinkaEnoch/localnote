@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
-import type { Event, NoteListItem } from '@/types/models';
+import { ReminderRepository } from '@/database/repositories/ReminderRepository';
+import type { Event, NoteListItem, Reminder } from '@/types/models';
 import './CalendarPage.css';
 
 export function CalendarPage() {
@@ -12,6 +13,11 @@ export function CalendarPage() {
   
   const [monthEvents, setMonthEvents] = useState<Event[]>([]);
   const [monthNotes, setMonthNotes] = useState<NoteListItem[]>([]);
+  const [monthReminders, setMonthReminders] = useState<Reminder[]>([]);
+
+  // Lookup maps for reminder parents (to resolve titles and note types).
+  const [eventsMap, setEventsMap] = useState<Record<string, Event>>({});
+  const [notesMap, setNotesMap] = useState<Record<string, NoteListItem>>({});
 
   useEffect(() => {
     const fetchMonthData = async () => {
@@ -31,9 +37,22 @@ export function CalendarPage() {
       
       const events = await EventRepository.getByDateRange(startDate, endDate);
       const notes = await NoteRepository.getAll();
-      
+      const reminders = await ReminderRepository.getByDateRange(startDate, endDate);
+      // Reminder parents may sit outside the displayed month (e.g. a recurring
+      // event spanning months), so fetch all to resolve titles/types reliably.
+      const allEvents = await EventRepository.getAll();
+
       setMonthEvents(events);
       setMonthNotes(notes);
+      setMonthReminders(reminders);
+
+      const eventsById: Record<string, Event> = {};
+      for (const e of allEvents) eventsById[e.id] = e;
+      setEventsMap(eventsById);
+
+      const notesById: Record<string, NoteListItem> = {};
+      for (const n of notes) notesById[n.id] = n;
+      setNotesMap(notesById);
     };
     fetchMonthData();
   }, [currentMonth]);
@@ -97,6 +116,17 @@ export function CalendarPage() {
   const selectedDateStr = formatDateString(selectedDate);
   const selectedEvents = monthEvents.filter(e => isOnLocalDate(e.startDate, selectedDate));
   const selectedNotes = monthNotes.filter(n => isOnLocalDate(n.eventDate, selectedDate));
+  const selectedReminders = monthReminders.filter(r => isOnLocalDate(r.remindAt, selectedDate));
+
+  // Resolve a reminder's parent and navigate to it (note/checklist/event).
+  const openReminderParent = (id: string, parentType: 'note' | 'event') => {
+    if (parentType === 'event') {
+      navigate(`/event/${id}`);
+    } else {
+      const type = notesMap[id]?.type;
+      navigate(`/${type === 'checklist' ? 'checklist' : 'note'}/${id}`);
+    }
+  };
 
   const formatTime = (isoString: string) => {
     const d = new Date(isoString);
@@ -218,6 +248,44 @@ export function CalendarPage() {
               <span className="material-symbols-outlined">add</span>
               Add event for this date
             </button>
+          </div>
+
+          {/* Reminders for the selected date */}
+          <div className="reminders-section">
+            <h3 className="reminders-title">
+              <span className="material-symbols-outlined">notifications_active</span>
+              Reminders
+            </h3>
+            {selectedReminders.length === 0 ? (
+              <p className="reminders-empty">No reminders for this date.</p>
+            ) : (
+              <div className="reminders-list">
+                {selectedReminders.map((reminder) => {
+                  const parent = reminder.parentType === 'event'
+                    ? eventsMap[reminder.parentId]
+                    : notesMap[reminder.parentId];
+                  const title = parent?.title || 'Untitled';
+                  return (
+                    <div
+                      key={reminder.id}
+                      className="agenda-item reminder-item"
+                      onClick={() => openReminderParent(reminder.parentId, reminder.parentType)}
+                    >
+                      <div className="item-icon-wrapper reminder-icon">
+                        <span className="material-symbols-outlined">notifications</span>
+                      </div>
+                      <div className="item-content">
+                        <h3 className="item-title">{title}</h3>
+                        <p className="item-subtitle">{formatTime(reminder.remindAt)}</p>
+                      </div>
+                      <button className="edit-btn">
+                        <span className="material-symbols-outlined">chevron_right</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
