@@ -115,20 +115,30 @@ export function NotesHomePage() {
   };
 
   const handleDeleteSelected = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
     try {
-      // Cancel any scheduled OS notifications first, then delete the notes
-      // (NoteRepository.remove cascades checklist items, attachments and
-      // reminder records in a single transaction).
-      await Promise.all(
-        Array.from(selectedIds).map(noteId =>
-          cancelNoteReminder(noteId).catch(err => console.error('[NotesHome] reminder cancel failed:', err))
-        )
-      );
-      await Promise.all(Array.from(selectedIds).map(noteId => NoteRepository.remove(noteId)));
+      // Cancel any scheduled OS notifications first.
+      for (const noteId of ids) {
+        try {
+          await cancelNoteReminder(noteId);
+        } catch (err) {
+          console.error('[NotesHome] reminder cancel failed:', err);
+        }
+      }
+      // IMPORTANT: remove() opens a manual BEGIN TRANSACTION on the shared
+      // connection, so the deletes MUST run sequentially — parallel deletes
+      // ("cannot start a transaction within a transaction") all roll back.
+      for (const noteId of ids) {
+        await NoteRepository.remove(noteId);
+      }
       exitSelectionMode();
       await loadData();
     } catch (e) {
-      console.error(e);
+      console.error('[NotesHome] bulk delete failed:', e);
+      // Reload so the UI reflects whatever actually persisted; stay in
+      // selection mode so the user can retry the remainder.
+      await loadData();
     }
   };
 
