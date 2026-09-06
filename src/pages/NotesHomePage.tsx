@@ -3,9 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { useDrawer } from '@/components/layout/DrawerContext';
+import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
+import { cancelNoteReminder } from '@/services/reminderService';
 import { NOTE_COLOR_VAR, FOLDER_COLOR_VAR } from '@/theme/colors';
 import type { FolderWithCount, NoteListItem, SortOption } from '@/types/models';
 import './NotesHomePage.css';
+
+/** How long a press must be held before multi-select mode activates. */
+const LONG_PRESS_MS = 500;
 
 export function NotesHomePage() {
   const navigate = useNavigate();
@@ -15,8 +20,13 @@ export function NotesHomePage() {
   const [sortBy, setSortBy] = useState<SortOption>('updated');
   const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const createRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFired = useRef(false);
 
   useEffect(() => {
     loadData();
@@ -46,6 +56,82 @@ export function NotesHomePage() {
     }
   };
 
+  // Cancel any pending long-press when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    };
+  }, []);
+
+  const enterSelectionMode = (itemId: string) => {
+    setIsSelectionMode(true);
+    setSelectedIds(new Set([itemId]));
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
+  /** Long-press (touch or mouse) starts selection mode with the pressed item. */
+  const handleItemPressStart = (itemId: string) => {
+    longPressFired.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressFired.current = true;
+      if (!isSelectionMode) enterSelectionMode(itemId);
+    }, LONG_PRESS_MS);
+  };
+
+  const handleItemPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleItemClick = (itemId: string, path: string) => {
+    // Swallow the click that terminates a long-press so it doesn't navigate.
+    if (longPressFired.current) {
+      longPressFired.current = false;
+      return;
+    }
+    if (isSelectionMode) {
+      toggleItemSelection(itemId);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    try {
+      // Cancel any scheduled OS notifications first, then delete the notes
+      // (NoteRepository.remove cascades checklist items, attachments and
+      // reminder records in a single transaction).
+      await Promise.all(
+        Array.from(selectedIds).map(noteId =>
+          cancelNoteReminder(noteId).catch(err => console.error('[NotesHome] reminder cancel failed:', err))
+        )
+      );
+      await Promise.all(Array.from(selectedIds).map(noteId => NoteRepository.remove(noteId)));
+      exitSelectionMode();
+      await loadData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const formatTime = (isoString: string) => {
     const d = new Date(isoString);
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -61,12 +147,29 @@ export function NotesHomePage() {
     if (isChecklist) path = `/checklist/${item.id}`;
     if (isEvent) path = `/event/${item.eventId}`;
 
+    const isSelected = selectedIds.has(item.id);
+
     return (
       <React.Fragment key={item.id}>
         <div
-          className="list-item"
-          onClick={() => navigate(path)}
+          className={`list-item ${isSelectionMode ? 'selection-mode' : ''} ${isSelected ? 'selected' : ''}`}
+          onPointerDown={() => handleItemPressStart(item.id)}
+          onPointerUp={handleItemPressEnd}
+          onPointerLeave={handleItemPressEnd}
+          onPointerCancel={handleItemPressEnd}
+          onContextMenu={(e) => { if (isSelectionMode || longPressFired.current) e.preventDefault(); }}
+          onClick={() => handleItemClick(item.id, path)}
         >
+          {isSelectionMode && (
+            <span
+              className="list-item-checkbox"
+              aria-hidden="true"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>
+                {isSelected ? 'check' : ''}
+              </span>
+            </span>
+          )}
           <div
             className="list-item-indicator"
             style={{ backgroundColor: accentColor }}
@@ -101,23 +204,43 @@ export function NotesHomePage() {
   return (
     <div className="notes-home-page">
       <header className="top-bar">
-        <button className="top-bar-icon-button left" onClick={openDrawer} aria-label="Open menu">
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-        <div className="top-bar-title">LocalNote</div>
-        <div className="relative" ref={createRef}>
-          <button className="top-bar-icon-button right" onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}>
-            <span className="material-symbols-outlined">add</span>
-          </button>
-          {isCreateMenuOpen && (
-            <div className="create-menu">
-              <button onClick={() => navigate('/note/new')}><span className="material-symbols-outlined">description</span> Note</button>
-              <button onClick={() => navigate('/checklist/new')}><span className="material-symbols-outlined">checklist</span> Checklist</button>
-              <button onClick={() => navigate('/event/new')}><span className="material-symbols-outlined">event</span> Event</button>
-              <button onClick={() => navigate('/folder/new')}><span className="material-symbols-outlined">folder</span> Folder</button>
+        {isSelectionMode ? (
+          <>
+            <button className="top-bar-icon-button left" onClick={exitSelectionMode} aria-label="Exit selection mode">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="top-bar-title">{selectedIds.size} selected</div>
+            <button
+              className="top-bar-icon-button right"
+              onClick={() => setConfirmDeleteOpen(true)}
+              disabled={selectedIds.size === 0}
+              aria-label="Delete selected items"
+              style={selectedIds.size === 0 ? { opacity: 0.4, pointerEvents: 'none' } : { color: 'var(--color-error)' }}
+            >
+              <span className="material-symbols-outlined">delete</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="top-bar-icon-button left" onClick={openDrawer} aria-label="Open menu">
+              <span className="material-symbols-outlined">menu</span>
+            </button>
+            <div className="top-bar-title">LocalNote</div>
+            <div className="relative" ref={createRef}>
+              <button className="top-bar-icon-button right" onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}>
+                <span className="material-symbols-outlined">add</span>
+              </button>
+              {isCreateMenuOpen && (
+                <div className="create-menu">
+                  <button onClick={() => navigate('/note/new')}><span className="material-symbols-outlined">description</span> Note</button>
+                  <button onClick={() => navigate('/checklist/new')}><span className="material-symbols-outlined">checklist</span> Checklist</button>
+                  <button onClick={() => navigate('/event/new')}><span className="material-symbols-outlined">event</span> Event</button>
+                  <button onClick={() => navigate('/folder/new')}><span className="material-symbols-outlined">folder</span> Folder</button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </header>
       <main className="main-content">
         <div className="header-controls">
@@ -179,6 +302,19 @@ export function NotesHomePage() {
           )}
         </section>
       </main>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        title={`Delete ${selectedIds.size} ${selectedIds.size === 1 ? 'item' : 'items'}?`}
+        message="The selected notes and checklists will be permanently removed, including their checklist items and reminders. This action cannot be undone."
+        confirmText="Delete"
+        destructive
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          handleDeleteSelected();
+        }}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 }
