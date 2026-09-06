@@ -367,7 +367,7 @@ export function ChecklistEditorPage() {
                 />
                 <button
                   aria-label="Delete item"
-                  className="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-surface-container-high text-error"
+                  className="text-on-surface-variant opacity-60 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-surface-container-high text-error"
                   onClick={() => handleDeleteItem(item.id)}
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
@@ -424,7 +424,7 @@ export function ChecklistEditorPage() {
                     />
                     <button
                       aria-label="Delete item"
-                      className="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-surface-container-high text-error"
+                      className="text-on-surface-variant opacity-60 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-surface-container-high text-error"
                       onClick={() => handleDeleteItem(item.id)}
                     >
                       <span className="material-symbols-outlined text-[20px]">close</span>
