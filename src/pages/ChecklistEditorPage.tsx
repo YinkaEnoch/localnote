@@ -8,6 +8,24 @@ import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import { ReminderModal, formatReminderSummary, type ReminderConfig } from '@/components/modals/ReminderModal';
 import { scheduleNoteReminder, cancelNoteReminder } from '@/services/reminderService';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 /**
  * Textarea that always wraps long text (no horizontal scrolling) and grows
@@ -42,6 +60,78 @@ function AutoGrowTextarea({
       onChange={onChange}
       onKeyDown={onKeyDown}
     />
+  );
+}
+
+/**
+ * A draggable checklist item row. Dragging is restricted to the grip handle
+ * so normal interaction (typing, checking, deleting) is never interrupted.
+ */
+function SortableChecklistItem({
+  item,
+  onToggle,
+  onTextChange,
+  onDelete,
+  onFocusNext,
+}: {
+  item: ChecklistItem;
+  onToggle: (itemId: string, currentStatus: boolean) => void;
+  onTextChange: (itemId: string, text: string) => void;
+  onDelete: (itemId: string) => void;
+  onFocusNext: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`flex items-center gap-md group p-unit hover:bg-surface-container rounded-lg transition-colors ${
+        isDragging ? 'opacity-50 z-10 relative bg-surface-container rounded-lg shadow-lg' : ''
+      }`}
+    >
+      <button
+        ref={setActivatorNodeRef}
+        aria-label="Reorder item"
+        className="text-on-surface-variant/60 hover:text-on-surface-variant cursor-grab active:cursor-grabbing touch-none p-0.5 -ml-1 shrink-0"
+        {...attributes}
+        {...listeners}
+      >
+        <span className="material-symbols-outlined text-[20px]">drag_indicator</span>
+      </button>
+      <button
+        aria-label="Check item"
+        className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center cursor-pointer transition-all hover:border-primary shrink-0"
+        onClick={() => onToggle(item.id, item.isCompleted)}
+      />
+      <AutoGrowTextarea
+        ariaLabel="Checklist item"
+        className="checklist-item-text flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 font-body-md text-on-background"
+        value={item.text}
+        onChange={(e) => onTextChange(item.id, e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            onFocusNext();
+          }
+        }}
+      />
+      <button
+        aria-label="Delete item"
+        className="text-on-surface-variant opacity-60 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-surface-container-high text-error"
+        onClick={() => onDelete(item.id)}
+      >
+        <span className="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
   );
 }
 
@@ -235,6 +325,35 @@ export function ChecklistEditorPage() {
     blue: 'bg-primary-container',
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = async ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const oldIndex = activeItems.findIndex(i => i.id === active.id);
+    const newIndex = activeItems.findIndex(i => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reorderedActive = arrayMove(activeItems, oldIndex, newIndex);
+    // Reassign sortOrder across the full list (completed items appended so
+    // they keep sorting after active ones) and persist changed positions.
+    const combined = [...reorderedActive, ...completedItems];
+    const updates = combined
+      .map((item, index) => ({ item, sortOrder: index }))
+      .filter(({ item, sortOrder }) => item.sortOrder !== sortOrder);
+    setItems(combined.map((item, index) => ({ ...item, sortOrder: index })));
+    if (updates.length > 0) {
+      try {
+        await ChecklistRepository.reorder(updates.map(({ item, sortOrder }) => ({ id: item.id, sortOrder })));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   const activeItems = items.filter(i => !i.isCompleted);
   const completedItems = items.filter(i => i.isCompleted);
 
@@ -342,38 +461,25 @@ export function ChecklistEditorPage() {
 
           {/* Checklist Items */}
           <section className="flex flex-col gap-xs">
-            {/* Active Items */}
-            {activeItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-md group p-unit hover:bg-surface-container rounded-lg transition-colors"
-              >
-                <button
-                  aria-label="Check item"
-                  className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center cursor-pointer transition-all hover:border-primary shrink-0"
-                  onClick={() => handleToggleItem(item.id, item.isCompleted)}
-                />
-                <AutoGrowTextarea
-                  ariaLabel="Checklist item"
-                  className="checklist-item-text flex-1 bg-transparent border-none outline-none focus:ring-0 p-0 font-body-md text-on-background"
-                  value={item.text}
-                  onChange={(e) => handleUpdateItemText(item.id, e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      newItemInputRef.current?.focus();
-                    }
-                  }}
-                />
-                <button
-                  aria-label="Delete item"
-                  className="text-on-surface-variant opacity-60 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1 rounded hover:bg-surface-container-high text-error"
-                  onClick={() => handleDeleteItem(item.id)}
-                >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-              </div>
-            ))}
+            {/* Active Items — drag to reorder */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={activeItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                {activeItems.map((item) => (
+                  <SortableChecklistItem
+                    key={item.id}
+                    item={item}
+                    onToggle={handleToggleItem}
+                    onTextChange={handleUpdateItemText}
+                    onDelete={handleDeleteItem}
+                    onFocusNext={() => newItemInputRef.current?.focus()}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
 
             {/* Add Item Row */}
             <form onSubmit={handleAddItem} className="flex items-center gap-md p-unit mt-sm mb-sm border-t border-b border-surface-container-high pt-md">
