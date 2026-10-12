@@ -8,6 +8,7 @@ interface MobileDrawerProps {
 const navItems = [
   { path: '/', label: 'All Notes', icon: 'home' },
   { path: '/calendar', label: 'Calendar', icon: 'calendar_today' },
+  { path: '/events', label: 'All Events', icon: 'event' },
   { path: '/search', label: 'Search', icon: 'search' },
 ];
 

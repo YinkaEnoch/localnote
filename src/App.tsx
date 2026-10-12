@@ -15,6 +15,7 @@ const TextNoteEditorPage = lazy(() => import('@/pages/TextNoteEditorPage').then(
 const ChecklistEditorPage = lazy(() => import('@/pages/ChecklistEditorPage').then(m => ({ default: m.ChecklistEditorPage })));
 const EventEditorPage = lazy(() => import('@/pages/EventEditorPage').then(m => ({ default: m.EventEditorPage })));
 const CalendarPage = lazy(() => import('@/pages/CalendarPage').then(m => ({ default: m.CalendarPage })));
+const EventsPage = lazy(() => import('@/pages/EventsPage').then(m => ({ default: m.EventsPage })));
 const SearchPage = lazy(() => import('@/pages/SearchPage').then(m => ({ default: m.SearchPage })));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const BackupPage = lazy(() => import('@/pages/BackupPage').then(m => ({ default: m.BackupPage })));
@@ -45,6 +46,7 @@ export function App() {
               <Route element={<AppLayout />}>
                 <Route path="/" element={<NotesHomePage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/events" element={<EventsPage />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/backup" element={<BackupPage />} />

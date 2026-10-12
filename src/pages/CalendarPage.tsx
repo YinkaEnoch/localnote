@@ -142,6 +142,9 @@ export function CalendarPage() {
         <div className="calendar-header">
           <h1 className="calendar-title">{monthYearString}</h1>
           <div className="calendar-nav">
+            <button className="icon-btn" onClick={() => navigate('/events')} title="All events" aria-label="All events">
+              <span className="material-symbols-outlined">event</span>
+            </button>
             <button className="icon-btn" onClick={handlePrevMonth}>
               <span className="material-symbols-outlined">chevron_left</span>
             </button>

@@ -9,6 +9,7 @@ export function DesktopSidebar() {
   const navItems = [
     { path: '/', label: 'All Notes', icon: <IconHome size={20} /> },
     { path: '/calendar', label: 'Calendar', icon: <IconCalendar size={20} /> },
+    { path: '/events', label: 'All Events', icon: <IconCalendar size={20} /> },
   ];
 
   return (

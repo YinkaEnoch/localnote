@@ -67,23 +67,78 @@ const parseReminderDays = (value: string | undefined | null): number[] => {
   }
 };
 
-const getSortClause = (sortBy: SortOption): string => {
+const getSortClause = (sortBy: SortOption | EventSortOption): string => {
   switch (sortBy) {
     case 'created':
       return 'created_at DESC';
     case 'alphabetical':
       return 'title COLLATE NOCASE ASC';
+    case 'startAsc':
+      return 'start_date ASC';
+    case 'startDesc':
+      return 'start_date DESC';
     case 'updated':
     default:
       return 'updated_at DESC';
   }
 };
 
+/** Sort options supported by the paginated events list. */
+export type EventSortOption = SortOption | 'startAsc' | 'startDesc';
+
+export interface PagedEventsParams {
+  page: number; // 1-based
+  pageSize: number;
+  sortBy?: EventSortOption;
+  query?: string;
+}
+
+export interface PagedEventsResult {
+  items: Event[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export class EventRepository {
-  static async getAll(sortBy: SortOption = 'updated'): Promise<Event[]> {
+  static async getAll(sortBy: SortOption | EventSortOption = 'updated'): Promise<Event[]> {
     const db = await getDatabase();
     const res = await db.query(`SELECT * FROM events ORDER BY ${getSortClause(sortBy)};`);
     return (res.values || []).map(mapRowToEvent);
+  }
+
+  /**
+   * Paginated event listing for the All Events manage view.
+   * Uses SQL-level LIMIT/OFFSET so large tables never load fully into memory.
+   * Optional `query` matches title or description (LIKE %q%).
+   */
+  static async getPaged(params: PagedEventsParams): Promise<PagedEventsResult> {
+    const db = await getDatabase();
+    const page = Math.max(1, Math.floor(params.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Math.floor(params.pageSize) || 15));
+    const sortBy: EventSortOption = params.sortBy ?? 'startAsc';
+    const q = (params.query ?? '').trim();
+    const where = q ? 'WHERE title LIKE ? OR description LIKE ?' : '';
+    const whereArgs = q ? [`%${q}%`, `%${q}%`] : [];
+
+    const countRes = await db.query(`SELECT COUNT(*) AS total FROM events ${where};`, whereArgs);
+    const total = Number(countRes.values?.[0]?.total ?? 0) || 0;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const safePage = Math.min(page, totalPages);
+    const safeOffset = (safePage - 1) * pageSize;
+
+    const res = await db.query(
+      `SELECT * FROM events ${where} ORDER BY ${getSortClause(sortBy)} LIMIT ? OFFSET ?;`,
+      [...whereArgs, pageSize, safeOffset]
+    );
+    return {
+      items: (res.values || []).map(mapRowToEvent),
+      total,
+      page: safePage,
+      pageSize,
+      totalPages,
+    };
   }
 
   static async getById(id: string): Promise<Event | null> {

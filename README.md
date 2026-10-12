@@ -10,7 +10,7 @@
 
 - Rich-text editing powered by **Tiptap / ProseMirror**
   - Bold, italic, underline, strikethrough, code, blockquotes, lists, and inline links
-  - Content stored as clean HTML in a local SQLite database
+  - Content stored as clean HTML in a local SQLite database.
 - Color-coded labels for quick visual grouping
 - Optional **reminders** on any note (via the overflow menu) — set a date/time range, pick one or more offsets, choose the alarm sound, and repeat on specific weekdays within the range
 
