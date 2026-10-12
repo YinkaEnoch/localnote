@@ -31,7 +31,8 @@ export function SearchPage() {
 
   const highlightText = (text: string, highlight: string) => {
     if (!highlight.trim()) return text;
-    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = text.split(new RegExp(`(${escapedHighlight})`, 'gi'));
     return (
       <>
         {parts.map((part, i) => 

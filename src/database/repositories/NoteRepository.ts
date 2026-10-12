@@ -259,10 +259,12 @@ export class NoteRepository {
       params.push(wildcard);
     } else if (scope === 'contents') {
       whereClause = `WHERE n.content LIKE ? ESCAPE '\\' OR (${checklistMatch})`;
-      params.push(wildcard, wildcard, wildcard);
+      // 2 placeholders here (content + checklist EXISTS) + 1 snippet = 3 total.
+      params.push(wildcard, wildcard);
     } else {
       whereClause = `WHERE n.title LIKE ? ESCAPE '\\' OR n.content LIKE ? ESCAPE '\\' OR (${checklistMatch})`;
-      params.push(wildcard, wildcard, wildcard, wildcard);
+      // 3 placeholders here (title + content + checklist EXISTS) + 1 snippet = 4 total.
+      params.push(wildcard, wildcard, wildcard);
     }
 
     const query = `
