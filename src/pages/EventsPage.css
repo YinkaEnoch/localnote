@@ -1,5 +1,5 @@
 .events-page { display: flex; flex-direction: column; height: 100%; padding-top: 4rem; }
-.events-container { max-width: 800px; width: 100%; margin: 0 auto; padding: var(--space-lg) var(--space-margin-mobile) var(--space-xxl); }
+.events-container { max-width: 800px; width: 100%; margin: 0 auto; padding: var(--space-lg) var(--space-margin-mobile) calc(var(--space-xxl) * 2); }
 @media (min-width: 768px) { .events-container { padding-left: var(--space-margin-desktop); padding-right: var(--space-margin-desktop); padding-top: var(--space-xl); } }
 .desktop-only { display: none; }
 @media (min-width: 768px) { .desktop-only { display: block; } }
