@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { useTheme, type ThemeType, type FontSize } from '@/theme/ThemeProvider';
+import {
+  checkNotificationPermission,
+  checkExactAlarmSetting,
+  requestExactAlarmSetting,
+  resyncReminders,
+  type ExactAlarmState,
+} from '@/services/reminderService';
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -10,6 +18,57 @@ export function SettingsPage() {
   const [isFontSizeModalOpen, setIsFontSizeModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false);
+
+  // Alarm/notification health (native only; web has no OS alarms).
+  const isNative = Capacitor.getPlatform() !== 'web';
+  const [notifGranted, setNotifGranted] = useState<boolean | null>(null);
+  const [exactAlarm, setExactAlarm] = useState<ExactAlarmState>('unknown');
+  const [resyncMsg, setResyncMsg] = useState<string | null>(null);
+  const [resyncing, setResyncing] = useState(false);
+
+  const refreshAlarmStatus = async () => {
+    if (!isNative) return;
+    try {
+      setNotifGranted(await checkNotificationPermission());
+    } catch {
+      setNotifGranted(null);
+    }
+    try {
+      setExactAlarm(await checkExactAlarmSetting());
+    } catch {
+      setExactAlarm('unknown');
+    }
+  };
+
+  useEffect(() => {
+    void refreshAlarmStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFixExactAlarm = async () => {
+    const state = await requestExactAlarmSetting();
+    setExactAlarm(state);
+  };
+
+  const handleResync = async () => {
+    setResyncing(true);
+    setResyncMsg(null);
+    try {
+      const r = await resyncReminders();
+      if (r.skippedNoPermission) {
+        setResyncMsg('Notification permission is off — enable it first, then retry.');
+      } else if (r.rescheduledEvents === 0 && r.rescheduledNotes === 0) {
+        setResyncMsg('All alarms already look healthy — nothing to repair.');
+      } else {
+        setResyncMsg(`Repaired ${r.rescheduledEvents} event(s) + ${r.rescheduledNotes} note(s).`);
+      }
+    } catch {
+      setResyncMsg('Repair failed — please try again.');
+    } finally {
+      setResyncing(false);
+      void refreshAlarmStatus();
+    }
+  };
 
   const themeLabels: Record<ThemeType, string> = {
     system: 'System default',
@@ -61,6 +120,58 @@ export function SettingsPage() {
               </div>
             </div>
           </section>
+
+          {/* Notifications Section (native only) */}
+          {isNative && (
+            <section className="space-y-md">
+              <h2 className="font-label-sm text-label-sm text-primary uppercase tracking-wider font-semibold">Notifications</h2>
+              <div className="bg-surface rounded-xl overflow-hidden shadow-sm border border-outline-variant/20">
+                <div className="p-md flex items-center justify-between border-b border-surface-variant">
+                  <div>
+                    <h3 className="font-body-md text-body-md font-semibold text-on-surface">Notification permission</h3>
+                    <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
+                      {notifGranted === null ? 'Checking…' : notifGranted ? 'Granted — alarms can fire.' : 'Denied — alarms will NOT fire.'}
+                    </p>
+                  </div>
+                  <span className="material-symbols-outlined text-on-surface-variant">
+                    {notifGranted ? 'notifications_active' : 'notifications_off'}
+                  </span>
+                </div>
+                <div className="p-md flex items-center justify-between border-b border-surface-variant">
+                  <div>
+                    <h3 className="font-body-md text-body-md font-semibold text-on-surface">Exact alarms</h3>
+                    <p className="font-label-sm text-label-sm text-on-surface-variant mt-xs">
+                      {exactAlarm === 'granted'
+                        ? 'Allowed — reminders fire on time.'
+                        : exactAlarm === 'denied'
+                          ? 'Off — reminders may arrive late.'
+                          : 'Checking…'}
+                    </p>
+                  </div>
+                  {exactAlarm === 'denied' && (
+                    <button
+                      className="px-md py-sm rounded-full font-label-lg text-label-lg font-medium bg-primary text-on-primary hover:opacity-90 transition-opacity"
+                      onClick={handleFixExactAlarm}
+                    >
+                      Allow
+                    </button>
+                  )}
+                </div>
+                <div className="p-md">
+                  <button
+                    className="w-full py-2.5 rounded-xl border border-outline text-on-background font-medium hover:bg-surface-container transition-colors disabled:opacity-50"
+                    onClick={handleResync}
+                    disabled={resyncing}
+                  >
+                    {resyncing ? 'Repairing…' : 'Repair missed alarms'}
+                  </button>
+                  {resyncMsg && (
+                    <p className="font-label-sm text-label-sm text-on-surface-variant mt-sm text-center">{resyncMsg}</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Data Section */}
           <section className="space-y-md">

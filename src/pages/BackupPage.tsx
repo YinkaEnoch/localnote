@@ -243,6 +243,21 @@ export function BackupPage() {
         await db.execute('COMMIT;', false);
         setMessage({ text: 'Data successfully restored from backup!', type: 'success' });
         await loadStats();
+        // Imported reminder rows reference OS notification ids from another
+        // device/install — they will never fire here. Re-schedule future
+        // alarms from the imported event/note configs.
+        try {
+          const { resyncReminders } = await import('@/services/reminderService');
+          const resynced = await resyncReminders();
+          if (resynced.rescheduledEvents > 0 || resynced.rescheduledNotes > 0) {
+            setMessage({
+              text: `Data restored. Re-scheduled alarms for ${resynced.rescheduledEvents} event(s) and ${resynced.rescheduledNotes} note(s).`,
+              type: 'success',
+            });
+          }
+        } catch (err) {
+          console.warn('[backup] alarm resync after import failed:', err);
+        }
       } catch (err) {
         await db.execute('ROLLBACK;', false);
         throw err;

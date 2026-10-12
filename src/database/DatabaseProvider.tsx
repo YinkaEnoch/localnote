@@ -20,6 +20,11 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       const db = await getDatabase();
       await runMigrations(db);
       setState('ready');
+      // Repair OS alarms lost to reboot / force-stop / reinstall drift.
+      // Fire-and-forget: never blocks the UI, never prompts for permission.
+      void import('@/services/reminderService')
+        .then((m) => m.resyncReminders())
+        .catch((err) => console.warn('[reminder] startup resync failed:', err));
     } catch (error) {
       console.error('Database initialization failed:', error);
       setState('error');

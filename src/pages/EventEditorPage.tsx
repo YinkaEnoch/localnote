@@ -8,7 +8,7 @@ import { FolderRepository } from '@/database/repositories/FolderRepository';
 import type { Event, NoteColor, ReminderOffset, EventSound } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
-import { scheduleEventReminder, cancelEventReminder } from '@/services/reminderService';
+import { scheduleEventReminderDetailed, cancelEventReminder, describeReminderOutcome } from '@/services/reminderService';
 
 export function EventEditorPage() {
   const { id } = useParams<{ id?: string }>();
@@ -113,9 +113,14 @@ export function EventEditorPage() {
       console.log('[EventEditor] saved event:', savedEvent.id, 'start:', savedEvent.startDate, 'reminders:', savedEvent.reminders);
       // Reminder scheduling must NOT block saving/navigation — a notification
       // plugin hiccup (permission dialog, exact-alarm denial on some ROMs)
-      // should only be logged, never break the persist or show a false error.
-      scheduleEventReminder(savedEvent)
-        .then((notifId) => console.log('[EventEditor] reminder scheduled, notificationId:', notifId))
+      // should only be logged, never break the persist. Surface a message so
+      // a silently-missed alarm is visible instead of failing quietly.
+      scheduleEventReminderDetailed(savedEvent)
+        .then((outcome) => {
+          console.log('[EventEditor] reminder outcome:', outcome);
+          const msg = describeReminderOutcome(outcome);
+          if (msg) alert(msg);
+        })
         .catch((err) => console.error('[EventEditor] reminder scheduling failed (event still saved):', err));
       navigate(-1);
     } catch (err) {

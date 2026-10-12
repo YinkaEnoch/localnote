@@ -122,6 +122,13 @@ export class NoteRepository {
     return mapRowToNote(res.values[0] as NoteRow);
   }
 
+  /** Full note rows (with reminder config) — used by the reminder resync. */
+  static async getAllFull(sortBy: SortOption = 'updated'): Promise<Note[]> {
+    const db = await getDatabase();
+    const res = await db.query(`SELECT * FROM notes ORDER BY ${getSortClause(sortBy).replace(/n\./g, '')};`);
+    return (res.values || []).map(mapRowToNote);
+  }
+
   static async getByFolderId(folderId: string, sortBy: SortOption = 'updated'): Promise<NoteListItem[]> {
     const db = await getDatabase();
     const query = `

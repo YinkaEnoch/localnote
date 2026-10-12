@@ -9,7 +9,7 @@ import type { Note, ChecklistItem, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import { ReminderModal, formatReminderSummary, type ReminderConfig } from '@/components/modals/ReminderModal';
-import { scheduleNoteReminder, cancelNoteReminder } from '@/services/reminderService';
+import { scheduleNoteReminderDetailed, cancelNoteReminder, describeReminderOutcome } from '@/services/reminderService';
 import {
   DndContext,
   closestCenter,
@@ -282,9 +282,14 @@ export function ChecklistEditorPage() {
       });
       setNote(updated);
       // Scheduling must not block saving — a notification plugin hiccup
-      // should only be logged, never break persistence.
-      scheduleNoteReminder(updated)
-        .then((notifId) => console.log('[Checklist] reminder scheduled, notificationId:', notifId))
+      // should only be logged, never break persistence. Surface a message so
+      // a silently-missed alarm is visible instead of failing quietly.
+      scheduleNoteReminderDetailed(updated)
+        .then((outcome) => {
+          console.log('[Checklist] reminder outcome:', outcome);
+          const msg = describeReminderOutcome(outcome);
+          if (msg) alert(msg);
+        })
         .catch((err) => console.error('[Checklist] reminder scheduling failed (note still saved):', err));
     } catch (err) {
       console.error('Failed to save reminder:', err);

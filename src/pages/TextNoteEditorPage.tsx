@@ -12,7 +12,7 @@ import { NoteRepository } from '@/database/repositories/NoteRepository';
 import type { Note, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ReminderModal, formatReminderSummary, type ReminderConfig } from '@/components/modals/ReminderModal';
-import { scheduleNoteReminder, cancelNoteReminder } from '@/services/reminderService';
+import { scheduleNoteReminderDetailed, cancelNoteReminder, describeReminderOutcome } from '@/services/reminderService';
 import './TextNoteEditorPage.css';
 
 export function TextNoteEditorPage() {
@@ -99,9 +99,14 @@ export function TextNoteEditorPage() {
       const updated = await NoteRepository.update(current.id, config);
       setNote(updated);
       // Scheduling must not block saving — a notification plugin hiccup
-      // should only be logged, never break persistence.
-      scheduleNoteReminder(updated)
-        .then((notifId) => console.log('[TextNote] reminder scheduled, notificationId:', notifId))
+      // should only be logged, never break persistence. Surface a message so
+      // a silently-missed alarm is visible instead of failing quietly.
+      scheduleNoteReminderDetailed(updated)
+        .then((outcome) => {
+          console.log('[TextNote] reminder outcome:', outcome);
+          const msg = describeReminderOutcome(outcome);
+          if (msg) alert(msg);
+        })
         .catch((err) => console.error('[TextNote] reminder scheduling failed (note still saved):', err));
     } catch (err) {
       console.error('Failed to save reminder:', err);
