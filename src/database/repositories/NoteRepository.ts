@@ -23,6 +23,7 @@ interface NoteRow {
   checklist_total?: number;
   checklist_completed?: number;
   event_start_date?: string;
+  matched_checklist_text?: string | null;
 }
 
 const parseReminderOffsets = (value: string | undefined | null): ReminderOffset[] => {
@@ -63,8 +64,12 @@ const mapRowToNote = (row: NoteRow): Note => ({
 });
 
 const mapRowToListItem = (row: NoteRow): NoteListItem => {
-  // Strip HTML from content for snippet preview
-  const snippet = row.content.replace(/<[^>]*>?/gm, '').trim().slice(0, 120);
+  // Strip HTML from content for snippet preview. Checklist notes store their
+  // item text in `checklist_items`, leaving `content` empty — fall back to the
+  // matched checklist item text (provided by search) so results show context.
+  const contentSnippet = (row.content || '').replace(/<[^>]*>?/gm, '').trim().slice(0, 120);
+  const snippet =
+    contentSnippet || (row.matched_checklist_text || '').trim().slice(0, 120);
   return {
     id: row.id,
     title: row.title,
@@ -227,19 +232,30 @@ export class NoteRepository {
   static async search(queryText: string, scope: SearchScope = 'all'): Promise<NoteListItem[]> {
     if (!queryText.trim()) return [];
     const db = await getDatabase();
-    const wildcard = `%${queryText.trim()}%`;
+    // Escape LIKE wildcards so a literal `%`, `_`, or `\` in the query
+    // doesn't act as a pattern operator. All LIKEs use `ESCAPE '\'`.
+    const escaped = queryText.trim().replace(/[\\%_]/g, (m) => `\\${m}`);
+    const wildcard = `%${escaped}%`;
     let whereClause = '';
     const params: string[] = [];
 
+    // Checklist item text lives in `checklist_items`, not in `notes.content`
+    // (checklist notes are created with content = ''). Match it via EXISTS so
+    // item text is searchable, and surface the first matching item as
+    // `matched_checklist_text` for the result snippet.
+    const checklistMatch = `EXISTS (SELECT 1 FROM checklist_items ci WHERE ci.note_id = n.id AND ci.text LIKE ? ESCAPE '\\')`;
+    const checklistSnippet = `(SELECT ci.text FROM checklist_items ci WHERE ci.note_id = n.id AND ci.text LIKE ? ESCAPE '\\' ORDER BY ci.sort_order ASC LIMIT 1)`;
+
     if (scope === 'titles') {
-      whereClause = 'WHERE n.title LIKE ?';
+      // Titles only: checklist item text is content, not a title.
+      whereClause = `WHERE n.title LIKE ? ESCAPE '\\'`;
       params.push(wildcard);
     } else if (scope === 'contents') {
-      whereClause = 'WHERE n.content LIKE ?';
-      params.push(wildcard);
+      whereClause = `WHERE n.content LIKE ? ESCAPE '\\' OR (${checklistMatch})`;
+      params.push(wildcard, wildcard, wildcard);
     } else {
-      whereClause = 'WHERE n.title LIKE ? OR n.content LIKE ?';
-      params.push(wildcard, wildcard);
+      whereClause = `WHERE n.title LIKE ? ESCAPE '\\' OR n.content LIKE ? ESCAPE '\\' OR (${checklistMatch})`;
+      params.push(wildcard, wildcard, wildcard, wildcard);
     }
 
     const query = `
@@ -247,13 +263,15 @@ export class NoteRepository {
         n.*,
         (SELECT COUNT(*) FROM checklist_items ci WHERE ci.note_id = n.id) as checklist_total,
         (SELECT COUNT(*) FROM checklist_items ci WHERE ci.note_id = n.id AND ci.is_completed = 1) as checklist_completed,
-        e.start_date as event_start_date
+        e.start_date as event_start_date,
+        ${checklistSnippet} as matched_checklist_text
       FROM notes n
       LEFT JOIN events e ON n.event_id = e.id
       ${whereClause}
       ORDER BY n.updated_at DESC;
     `;
-    const res = await db.query(query, params);
+    // Params: 1 for the snippet subquery SELECT, then the WHERE clause params.
+    const res = await db.query(query, [wildcard, ...params]);
     return (res.values || []).map(mapRowToListItem);
   }
 }
