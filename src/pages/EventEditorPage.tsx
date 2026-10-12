@@ -205,7 +205,7 @@ export function EventEditorPage() {
   };
 
   return (
-    <div className="bg-background text-on-background h-dvh flex flex-col antialiased font-body-md overflow-hidden">
+    <div className="editor-shell bg-background text-on-background antialiased font-body-md">
       {/* Top App Bar */}
       <header className="flex justify-between items-center px-margin-mobile w-full h-16 shrink-0 bg-background text-primary font-headline-md top-0 sticky z-10 border-b border-outline-variant/20">
         <button
@@ -259,7 +259,7 @@ export function EventEditorPage() {
       </header>
 
       {/* Main Content Canvas */}
-      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 min-h-0 w-full max-w-[800px] mx-auto px-margin-mobile pb-xxl flex flex-col gap-lg mt-md overflow-y-auto">
+      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll editor-scroll-host w-full max-w-[800px] mx-auto px-margin-mobile pb-xxl flex flex-col gap-lg mt-md">
         {/* Title Input */}
         <input
           className="w-full bg-transparent border-none p-0 font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-background placeholder:text-on-surface-variant focus:ring-0 focus:outline-none font-bold"
