@@ -205,9 +205,9 @@ export function EventEditorPage() {
   };
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col antialiased font-body-md overflow-hidden">
+    <div className="bg-background text-on-background h-dvh flex flex-col antialiased font-body-md overflow-hidden">
       {/* Top App Bar */}
-      <header className="flex justify-between items-center px-margin-mobile w-full h-16 bg-background text-primary font-headline-md top-0 sticky z-10 border-b border-outline-variant/20">
+      <header className="flex justify-between items-center px-margin-mobile w-full h-16 shrink-0 bg-background text-primary font-headline-md top-0 sticky z-10 border-b border-outline-variant/20">
         <button
           aria-label="Go back"
           className="w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors duration-200 text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary"
@@ -259,7 +259,7 @@ export function EventEditorPage() {
       </header>
 
       {/* Main Content Canvas */}
-      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 w-full max-w-[800px] mx-auto px-margin-mobile pb-xxl flex flex-col gap-lg mt-md overflow-y-auto">
+      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 min-h-0 w-full max-w-[800px] mx-auto px-margin-mobile pb-xxl flex flex-col gap-lg mt-md overflow-y-auto">
         {/* Title Input */}
         <input
           className="w-full bg-transparent border-none p-0 font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-background placeholder:text-on-surface-variant focus:ring-0 focus:outline-none font-bold"
@@ -501,7 +501,7 @@ export function EventEditorPage() {
       </main>
 
       {/* Bottom Metadata & Toolbar Area */}
-      <div className="mt-auto w-full border-t border-surface-variant bg-background">
+      <div className="shrink-0 w-full border-t border-surface-variant bg-background">
         <div className="text-center py-sm">
           <span className="font-label-sm text-label-sm text-on-surface-variant">
             {event?.createdAt ? `Created ${new Date(event.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Draft Event'}

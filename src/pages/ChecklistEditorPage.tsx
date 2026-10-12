@@ -374,7 +374,7 @@ export function ChecklistEditorPage() {
   };
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col font-body-md overflow-hidden">
+    <div className="bg-background text-on-background h-dvh flex flex-col font-body-md overflow-hidden">
       {/* Top App Bar */}
       <header className="flex justify-between items-center px-margin-mobile w-full h-16 bg-background text-primary font-headline-md shrink-0 border-b border-outline-variant/20">
         <button
@@ -437,7 +437,7 @@ export function ChecklistEditorPage() {
       </header>
 
       {/* Main Content Area */}
-      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 flex justify-center w-full overflow-y-auto px-margin-mobile pb-32">
+      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 min-h-0 flex justify-center w-full overflow-y-auto px-margin-mobile pb-32">
         <div className="w-full max-w-[800px] flex flex-col gap-lg mt-md">
           {/* Header Section */}
           <section className="flex flex-col gap-unit">
