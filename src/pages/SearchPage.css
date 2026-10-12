@@ -47,6 +47,9 @@
   letter-spacing: -0.02em;
   margin: 0 0 var(--space-md);
   color: var(--color-on-background);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Search input */
@@ -269,6 +272,9 @@
   color: var(--color-on-surface);
   margin: 0;
   transition: color 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .result-card:hover .result-title {

@@ -4,7 +4,7 @@
 .desktop-only { display: none; }
 @media (min-width: 768px) { .desktop-only { display: block; } }
 .events-header { margin-bottom: var(--space-lg); }
-.events-title { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; color: var(--color-on-background); }
+.events-title { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 4px; color: var(--color-on-background); user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .events-subtitle { font-size: 13px; color: var(--color-on-surface-variant); margin: 0; }
 .events-toolbar { display: flex; gap: var(--space-sm); align-items: center; margin-bottom: var(--space-sm); }
 .events-search-wrapper { position: relative; flex: 1; }
@@ -38,7 +38,7 @@
 .event-card-indicator { width: 4px; flex-shrink: 0; }
 .event-card-main { flex: 1; min-width: 0; padding: 12px 8px 12px 12px; cursor: pointer; }
 .event-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 2px; }
-.event-card-title { font-size: 16px; font-weight: 700; color: var(--color-on-surface); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.event-card-title { font-size: 16px; font-weight: 700; color: var(--color-on-surface); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .event-card-date { font-size: 13px; color: var(--color-outline); white-space: nowrap; flex-shrink: 0; }
 .event-card-desc { font-size: 14px; color: var(--color-on-surface-variant); margin: 0 0 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .event-card-meta { display: flex; flex-wrap: wrap; gap: 6px; }

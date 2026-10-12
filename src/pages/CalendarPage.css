@@ -32,6 +32,9 @@
   font-weight: 600;
   color: var(--color-on-background);
   margin: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .calendar-nav {
@@ -216,6 +219,9 @@
   font-weight: bold;
   color: var(--color-on-background);
   margin: 0 0 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .item-subtitle, .item-meta {
