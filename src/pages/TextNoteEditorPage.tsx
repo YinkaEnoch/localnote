@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
+import { useKeepFocusVisible } from '@/hooks/useKeepFocusVisible';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -25,6 +27,9 @@ export function TextNoteEditorPage() {
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
+  const scrollRef = useRef<HTMLElement>(null);
+  useKeyboardInset();
+  useKeepFocusVisible(scrollRef, 96);
 
   const editor = useEditor({
     extensions: [
@@ -191,7 +196,7 @@ export function TextNoteEditorPage() {
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-y-auto px-margin-mobile md:px-margin-desktop py-lg max-w-[800px] w-full mx-auto hide-scrollbar">
+      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 flex flex-col overflow-y-auto px-margin-mobile md:px-margin-desktop py-lg max-w-[800px] w-full mx-auto hide-scrollbar">
         <div className="flex gap-sm mb-lg animate-fade-in-up">
           {colorOptions.map((c) => (
             <button key={c} onClick={() => handleColorSelect(c)} aria-label={`Select ${c} color`} className={`w-6 h-6 rounded-full ${colorMap[c]} border-2 ${color === c ? 'border-primary' : 'border-transparent'} transition-all`}></button>
@@ -223,7 +228,7 @@ export function TextNoteEditorPage() {
       </main>
 
       {editor && (
-        <div className="fixed bottom-0 w-full bg-surface-container-low border-t border-outline-variant/20 py-2 px-margin-mobile flex justify-center items-center h-16 z-20 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.4)]">
+        <div className="keyboard-toolbar fixed bottom-0 w-full bg-surface-container-low border-t border-outline-variant/20 py-2 px-margin-mobile flex justify-center items-center h-16 z-20 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.4)]">
           <div className="flex gap-xs bg-surface-container p-1 rounded-full">
             <button onClick={() => editor.chain().focus().toggleBold().run()} className={`w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest transition-colors font-bold ${editor.isActive('bold') ? 'text-primary bg-primary-container/20' : 'text-on-surface'}`}>
               <span className="material-symbols-outlined">format_bold</span>

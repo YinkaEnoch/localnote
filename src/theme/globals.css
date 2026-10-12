@@ -370,3 +370,43 @@ body {
 .text-body-md { font-family: 'Inter'; font-size: 16px; line-height: 24px; font-weight: 400; }
 .text-label-sm { font-family: 'Inter'; font-size: 13px; line-height: 18px; font-weight: 500; letter-spacing: 0.02em; }
 .text-mono { font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 20px; font-weight: 400; }
+
+/* ------------------------------------------------------------------
+ * Keyboard-aware editing (Android WebView + iOS Safari)
+ *
+ * JS (useKeyboardInset) sets `--keyboard-height` on <html> to the
+ * visible keyboard height. These rules then:
+ *  1. Lift fixed toolbars above the keyboard (overlay mode).
+ *  2. Add matching bottom padding to scroll containers so the caret
+ *     can always scroll into the visible area above the toolbar.
+ * When the WebView resizes (adjustResize) the var is 0 and the layout
+ * naturally sits above the keyboard — nothing double-counts.
+ * ------------------------------------------------------------------ */
+:root {
+  --keyboard-height: 0px;
+}
+
+/* Sticky formatting toolbar that must ride above the keyboard */
+.keyboard-toolbar {
+  bottom: var(--keyboard-height, 0px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+}
+
+/* Scroll containers in editors — reserve room for keyboard + toolbar */
+.editor-scroll {
+  scroll-padding-bottom: calc(var(--keyboard-height, 0px) + 140px) !important;
+  padding-bottom: calc(var(--keyboard-height, 0px) + 140px) !important;
+  /* Smooth, native-feeling scroll while typing */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Caret / focused line never tucks under the toolbar */
+.editor-scroll :is(input, textarea, [contenteditable='true']) {
+  scroll-margin-top: 76px;
+  scroll-margin-bottom: calc(var(--keyboard-height, 0px) + 140px);
+}
+
+.ProseMirror {
+  scroll-margin-bottom: calc(var(--keyboard-height, 0px) + 140px);
+}

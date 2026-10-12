@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
+import { useKeepFocusVisible } from '@/hooks/useKeepFocusVisible';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { FolderRepository } from '@/database/repositories/FolderRepository';
@@ -39,6 +41,9 @@ export function EventEditorPage() {
   const reminderMenuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
   useClickOutside(reminderMenuRef, () => setIsReminderMenuOpen(false), isReminderMenuOpen);
+  const scrollRef = useRef<HTMLElement>(null);
+  useKeyboardInset();
+  useKeepFocusVisible(scrollRef, 64);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -195,7 +200,7 @@ export function EventEditorPage() {
   };
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col antialiased font-body-md">
+    <div className="bg-background text-on-background min-h-screen flex flex-col antialiased font-body-md overflow-hidden">
       {/* Top App Bar */}
       <header className="flex justify-between items-center px-margin-mobile w-full h-16 bg-background text-primary font-headline-md top-0 sticky z-10 border-b border-outline-variant/20">
         <button
@@ -249,7 +254,7 @@ export function EventEditorPage() {
       </header>
 
       {/* Main Content Canvas */}
-      <main className="flex-1 w-full max-w-[800px] mx-auto px-margin-mobile pb-xxl flex flex-col gap-lg mt-md">
+      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 w-full max-w-[800px] mx-auto px-margin-mobile pb-xxl flex flex-col gap-lg mt-md overflow-y-auto">
         {/* Title Input */}
         <input
           className="w-full bg-transparent border-none p-0 font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-background placeholder:text-on-surface-variant focus:ring-0 focus:outline-none font-bold"

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
+import { useKeepFocusVisible } from '@/hooks/useKeepFocusVisible';
 import { useNavigate, useParams } from 'react-router-dom';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { ChecklistRepository } from '@/database/repositories/ChecklistRepository';
@@ -153,6 +155,9 @@ export function ChecklistEditorPage() {
   const menuRef = useRef<HTMLDivElement>(null);
   useClickOutside(menuRef, () => setIsMenuOpen(false), isMenuOpen);
   const newItemInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
+  useKeyboardInset();
+  useKeepFocusVisible(scrollRef, 64);
 
   useEffect(() => {
     if (!isNew && id) {
@@ -427,7 +432,7 @@ export function ChecklistEditorPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex justify-center w-full overflow-y-auto px-margin-mobile pb-32">
+      <main ref={scrollRef as React.Ref<HTMLElement>} className="editor-scroll flex-1 flex justify-center w-full overflow-y-auto px-margin-mobile pb-32">
         <div className="w-full max-w-[800px] flex flex-col gap-lg mt-md">
           {/* Header Section */}
           <section className="flex flex-col gap-unit">

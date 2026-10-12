@@ -8,6 +8,14 @@ const config: CapacitorConfig = {
     androidScheme: 'http',
   },
   plugins: {
+    Keyboard: {
+      // Let the WebView shrink when the keyboard opens so the caret and
+      // the sticky toolbar naturally stay above it. Our CSS var
+      // (--keyboard-height) stays 0 in this mode and only kicks in as a
+      // fallback when the OS overlays the keyboard instead.
+      resize: 'body',
+      resizeOnFullScreen: true,
+    },
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/CapacitorDatabase',
       iosIsEncryption: false,
