@@ -4,6 +4,7 @@ import { ReminderRepository } from '@/database/repositories/ReminderRepository';
 import { EventRepository } from '@/database/repositories/EventRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import type { Event, Note, ReminderOffset, EventSound } from '@/types/models';
+import { formatNotifyStamp12h } from '@/utils/time';
 import { buildReminderPlan } from './reminderSchedule';
 
 /** Notification channel used for events configured with the "long" alarm. */
@@ -211,13 +212,7 @@ const scheduleReminderDetailed = async (input: ReminderScheduleInput): Promise<R
   const notifications = plan.entries.map(({ remindAt }) => ({
     id: randomNotificationId(),
     title: input.title || (input.parentType === 'note' ? 'Note reminder' : 'Event reminder'),
-    body: `${input.bodyPrefix} ${remindAt.toLocaleString([], {
-      weekday: showWeekday ? 'short' : undefined,
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    })}`,
+    body: `${input.bodyPrefix} ${formatNotifyStamp12h(remindAt, showWeekday)}`,
     schedule: { at: remindAt, allowWhileIdle: true },
     // NOTE: no smallIcon/largeIcon — the launcher PNGs (`ic_launcher`) are
     // mipmap resources, and the plugin resolves icons from `drawable` only,

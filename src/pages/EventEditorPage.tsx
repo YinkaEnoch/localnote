@@ -8,6 +8,8 @@ import { FolderRepository } from '@/database/repositories/FolderRepository';
 import type { Event, NoteColor, ReminderOffset, EventSound } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
+import { DateTime12hPicker } from '@/components/ui/DateTime12hPicker';
+import { formatDateLabel, formatTime12h, formatCardDateTime12h } from '@/utils/time';
 import { scheduleEventReminderDetailed, cancelEventReminder, describeReminderOutcome } from '@/services/reminderService';
 
 export function EventEditorPage() {
@@ -192,16 +194,19 @@ export function EventEditorPage() {
     );
   };
 
-  const formatDateLabel = (isoDateStr: string) => {
+  const formatDateLabelLocal = (isoDateStr: string) => {
     if (!isoDateStr) return '';
-    const d = new Date(isoDateStr);
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    return formatDateLabel(isoDateStr);
   };
 
   const formatTimeLabel = (isoDateStr: string) => {
     if (!isoDateStr) return '';
-    const d = new Date(isoDateStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return formatTime12h(isoDateStr);
+  };
+
+  const formatCreatedLabel = (isoDateStr?: string | null) => {
+    if (!isoDateStr) return 'Draft Event';
+    return `Created ${formatCardDateTime12h(isoDateStr)}`;
   };
 
   return (
@@ -317,37 +322,39 @@ export function EventEditorPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-            {/* Start Date/Time */}
+            {/* Start Date/Time — strict 12-hour (date + 1-12 hr / min / AM-PM). */}
             <div className="flex flex-col items-start p-md rounded-xl bg-surface-container-low focus-within:ring-2 focus-within:ring-primary w-full text-left">
               <span className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Starts</span>
-              <input
-                type={allDay ? 'date' : 'datetime-local'}
-                className="w-full bg-transparent border-none p-0 font-body-md text-on-background font-medium focus:ring-0"
-                value={allDay ? startDate.slice(0, 10) : startDate}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setStartDate(allDay ? `${val}T09:00` : val);
-                }}
-              />
+              {allDay ? (
+                <input
+                  type="date"
+                  className="w-full bg-transparent border-none p-0 font-body-md text-on-background font-medium focus:ring-0"
+                  value={startDate.slice(0, 10)}
+                  onChange={(e) => setStartDate(`${e.target.value}T09:00`)}
+                />
+              ) : (
+                <DateTime12hPicker value={startDate} onChange={setStartDate} />
+              )}
               <span className="font-label-sm text-on-surface-variant/80 mt-1">
-                {formatDateLabel(startDate)} {!allDay && `• ${formatTimeLabel(startDate)}`}
+                {formatDateLabelLocal(startDate)} {!allDay && `• ${formatTimeLabel(startDate)}`}
               </span>
             </div>
 
-            {/* End Date/Time */}
+            {/* End Date/Time — strict 12-hour (date + 1-12 hr / min / AM-PM). */}
             <div className="flex flex-col items-start p-md rounded-xl bg-surface-container-low focus-within:ring-2 focus-within:ring-primary w-full text-left">
               <span className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Ends</span>
-              <input
-                type={allDay ? 'date' : 'datetime-local'}
-                className="w-full bg-transparent border-none p-0 font-body-md text-on-background font-medium focus:ring-0"
-                value={allDay ? endDate.slice(0, 10) : endDate}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setEndDate(allDay ? `${val}T10:00` : val);
-                }}
-              />
+              {allDay ? (
+                <input
+                  type="date"
+                  className="w-full bg-transparent border-none p-0 font-body-md text-on-background font-medium focus:ring-0"
+                  value={endDate.slice(0, 10)}
+                  onChange={(e) => setEndDate(`${e.target.value}T10:00`)}
+                />
+              ) : (
+                <DateTime12hPicker value={endDate} onChange={setEndDate} />
+              )}
               <span className="font-label-sm text-on-surface-variant/80 mt-1">
-                {formatDateLabel(endDate)} {!allDay && `• ${formatTimeLabel(endDate)}`}
+                {formatDateLabelLocal(endDate)} {!allDay && `• ${formatTimeLabel(endDate)}`}
               </span>
             </div>
           </div>
@@ -504,7 +511,7 @@ export function EventEditorPage() {
       <div className="shrink-0 w-full border-t border-surface-variant bg-background">
         <div className="text-center py-sm">
           <span className="font-label-sm text-label-sm text-on-surface-variant">
-            {event?.createdAt ? `Created ${new Date(event.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Draft Event'}
+            {formatCreatedLabel(event?.createdAt)}
           </span>
         </div>
         <div className="flex justify-around items-center h-16 px-gutter pb-safe w-full max-w-[800px] mx-auto text-base">

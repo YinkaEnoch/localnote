@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { Note, ReminderOffset, EventSound } from '@/types/models';
+import { DateTime12hPicker } from '@/components/ui/DateTime12hPicker';
+import {
+  formatReminderStamp12h,
+  formatTime12h,
+  toLocalInputValue,
+} from '@/utils/time';
 
 export type ReminderConfig = Pick<
   Note,
@@ -48,15 +54,11 @@ export const formatReminderSummary = (config: Partial<ReminderConfig>): string =
 
   const parts: string[] = [];
   if (config.reminderStart) {
-    const start = new Date(config.reminderStart);
     parts.push(
-      start.toLocaleString([], {
-        weekday: config.reminderDays && config.reminderDays.length > 0 ? 'short' : undefined,
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+      formatReminderStamp12h(
+        config.reminderStart,
+        !!config.reminderDays && config.reminderDays.length > 0,
+      ),
     );
   }
   if (config.reminderDays && config.reminderDays.length > 0) {
@@ -66,13 +68,8 @@ export const formatReminderSummary = (config: Partial<ReminderConfig>): string =
   return parts.join(' · ');
 };
 
-/** Converts a Date to a `datetime-local` input value (local wall time). */
-const toLocalInput = (date: Date): string => {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
-const minInputValue = (d: Date): string => toLocalInput(new Date(d.getTime() - 60_000));
+/** Converts a Date to a `datetime-local`-style local wall value. */
+const toLocalInput = (date: Date): string => toLocalInputValue(date);
 
 const getInitial = (initial?: Partial<ReminderConfig>) => {
   const base = initial?.reminderStart ? new Date(initial.reminderStart) : null;
@@ -171,26 +168,23 @@ export function ReminderModal({ isOpen, title, initial, onClose, onSave, onClear
             Remind me about this {title.toLowerCase()} at a chosen date, time and repeat.
           </p>
 
-          {/* Date & Time Range */}
+          {/* Date & Time Range — strict 12-hour (date + 1-12 hr / min / AM-PM). */}
           <div className="grid grid-cols-2 gap-md mb-lg">
             <div className="flex flex-col items-start p-md rounded-xl bg-surface-container-low focus-within:ring-2 focus-within:ring-primary w-full text-left">
               <span className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Starts</span>
-              <input
-                type="datetime-local"
-                className="w-full bg-transparent border-none p-0 font-body-md text-on-background font-medium focus:ring-0"
+              <DateTime12hPicker
                 value={state.start}
-                min={minInputValue(new Date())}
-                onChange={(e) => setState((prev) => ({ ...prev, start: e.target.value }))}
+                onChange={(v) => setState((prev) => ({ ...prev, start: v }))}
               />
+              <span className="font-label-sm text-on-surface-variant/80 mt-1">
+                {state.start ? formatTime12h(new Date(state.start)) : ''}
+              </span>
             </div>
             <div className="flex flex-col items-start p-md rounded-xl bg-surface-container-low focus-within:ring-2 focus-within:ring-primary w-full text-left">
               <span className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Ends</span>
-              <input
-                type="datetime-local"
-                className="w-full bg-transparent border-none p-0 font-body-md text-on-background font-medium focus:ring-0"
+              <DateTime12hPicker
                 value={state.end}
-                min={state.start}
-                onChange={(e) => setState((prev) => ({ ...prev, end: e.target.value }))}
+                onChange={(v) => setState((prev) => ({ ...prev, end: v }))}
               />
             </div>
           </div>

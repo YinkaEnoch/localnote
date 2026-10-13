@@ -4,6 +4,7 @@ import { FolderRepository } from '@/database/repositories/FolderRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { NOTE_COLOR_VAR, FOLDER_COLOR_VAR } from '@/theme/colors';
 import type { Folder, NoteListItem } from '@/types/models';
+import { formatCardDateTime12h, formatDateTime12h } from '@/utils/time';
 import './FolderPage.css';
 
 export function FolderPage() {
@@ -30,8 +31,7 @@ export function FolderPage() {
   };
 
   const formatTime = (isoString: string) => {
-    const d = new Date(isoString);
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return formatCardDateTime12h(isoString);
   };
 
   if (!folder) {
@@ -89,7 +89,7 @@ export function FolderPage() {
                      <span className="fp-card-desc">{item.checklistCompleted || 0} of {item.checklistTotal || 0} completed</span>
                   </div>
                 ) : isEvent ? (
-                  <p className="fp-card-desc">Event date: {item.eventDate ? new Date(item.eventDate).toLocaleString() : 'TBD'}</p>
+                  <p className="fp-card-desc">Event date: {item.eventDate ? formatDateTime12h(item.eventDate) : 'TBD'}</p>
                 ) : (
                   <p className="fp-card-desc">{item.snippet}</p>
                 )}

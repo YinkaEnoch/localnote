@@ -13,6 +13,7 @@ import type { Note, NoteColor } from '@/types/models';
 import { SelectFolderModal } from '@/components/modals/SelectFolderModal';
 import { ReminderModal, formatReminderSummary, type ReminderConfig } from '@/components/modals/ReminderModal';
 import { scheduleNoteReminderDetailed, cancelNoteReminder, describeReminderOutcome } from '@/services/reminderService';
+import { formatLocaleDateTime12h } from '@/utils/time';
 import './TextNoteEditorPage.css';
 
 export function TextNoteEditorPage() {
@@ -134,8 +135,7 @@ export function TextNoteEditorPage() {
   
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Now';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    return formatLocaleDateTime12h(dateString);
   };
 
   const handleColorSelect = async (c: NoteColor) => {

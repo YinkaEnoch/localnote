@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import { cancelEventReminder } from '@/services/reminderService';
 import { NOTE_COLOR_VAR } from '@/theme/colors';
 import type { Event } from '@/types/models';
+import { formatEventDateTime12h } from '@/utils/time';
 import './EventsPage.css';
 
 const PAGE_SIZE_OPTIONS = [10, 15, 20, 50];
@@ -21,15 +22,7 @@ const SORT_LABELS: Record<EventSortOption, string> = {
 const SORT_OPTIONS: EventSortOption[] = ['startAsc', 'startDesc', 'updated', 'created', 'alphabetical'];
 
 function formatEventDate(e: Event): string {
-  try {
-    const start = new Date(e.startDate);
-    const datePart = start.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-    if (e.allDay) return `${datePart} - All day`;
-    const timePart = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `${datePart} - ${timePart}`;
-  } catch {
-    return e.startDate;
-  }
+  return formatEventDateTime12h(e.startDate, { allDay: e.allDay });
 }
 
 export function EventsPage() {

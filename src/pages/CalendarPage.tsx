@@ -4,6 +4,7 @@ import { EventRepository } from '@/database/repositories/EventRepository';
 import { NoteRepository } from '@/database/repositories/NoteRepository';
 import { ReminderRepository } from '@/database/repositories/ReminderRepository';
 import type { Event, NoteListItem, Reminder } from '@/types/models';
+import { formatTime12h } from '@/utils/time';
 import './CalendarPage.css';
 
 export function CalendarPage() {
@@ -129,8 +130,7 @@ export function CalendarPage() {
   };
 
   const formatTime = (isoString: string) => {
-    const d = new Date(isoString);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return formatTime12h(isoString);
   };
 
   const monthYearString = currentMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });

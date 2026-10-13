@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import { cancelNoteReminder } from '@/services/reminderService';
 import { NOTE_COLOR_VAR, FOLDER_COLOR_VAR } from '@/theme/colors';
 import type { FolderWithCount, NoteListItem, SortOption } from '@/types/models';
+import { formatTime12h, formatDateTime12h } from '@/utils/time';
 import './NotesHomePage.css';
 
 /** How long a press must be held before multi-select mode activates. */
@@ -143,8 +144,7 @@ export function NotesHomePage() {
   };
 
   const formatTime = (isoString: string) => {
-    const d = new Date(isoString);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return formatTime12h(isoString);
   };
 
   const renderItem = (item: NoteListItem, index: number) => {
@@ -199,7 +199,7 @@ export function NotesHomePage() {
             ) : isEvent ? (
               <div className="list-item-badge" style={{ color: 'var(--color-tertiary)' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>event</span>
-                <span>{item.eventDate ? new Date(item.eventDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Event'}</span>
+                <span>{item.eventDate ? formatDateTime12h(item.eventDate) : 'Event'}</span>
               </div>
             ) : (
               <p className="list-item-snippet">{item.snippet}</p>
