@@ -143,7 +143,7 @@ export interface ReminderScheduleInput {
   days: number[];
   startDate: string; // ISO 8601 anchor (and start of the recurrence range)
   endDate: string | null; // ISO 8601 end of the recurrence range (optional)
-  /** Fragment placed before the formatted fire date in the notification body. */
+  /** Fragment placed before the formatted anchor (event start) date in the notification body. */
   bodyPrefix: string;
 }
 
@@ -209,10 +209,11 @@ const scheduleReminderDetailed = async (input: ReminderScheduleInput): Promise<R
   }
 
   const showWeekday = plan.anchorDates.length > 1;
-  const notifications = plan.entries.map(({ remindAt }) => ({
+  const notifications = plan.entries.map(({ remindAt, anchorAt }) => ({
     id: randomNotificationId(),
     title: input.title || (input.parentType === 'note' ? 'Note reminder' : 'Event reminder'),
-    body: `${input.bodyPrefix} ${formatNotifyStamp12h(remindAt, showWeekday)}`,
+    // Body shows the event/anchor start time, not the alert fire time.
+    body: `${input.bodyPrefix} ${formatNotifyStamp12h(anchorAt, showWeekday)}`,
     schedule: { at: remindAt, allowWhileIdle: true },
     // NOTE: no smallIcon/largeIcon — the launcher PNGs (`ic_launcher`) are
     // mipmap resources, and the plugin resolves icons from `drawable` only,

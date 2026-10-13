@@ -23,12 +23,14 @@ export interface ReminderScheduleInput {
   days: number[];
   startDate: string; // ISO 8601 anchor (and start of the recurrence range)
   endDate: string | null; // ISO 8601 end of the recurrence range (optional)
-  /** Fragment placed before the formatted fire date in the notification body. */
+  /** Fragment placed before the formatted anchor (event start) date in the notification body. */
   bodyPrefix: string;
 }
 
 export interface ReminderEntry {
   remindAt: Date;
+  /** The event/note anchor this alert belongs to (event start time). */
+  anchorAt: Date;
   offset: ReminderOffset;
 }
 
@@ -90,7 +92,7 @@ export const buildReminderPlan = (
     for (const at of anchorDates) {
       const remindAt = new Date(at.getTime() - OFFSET_MINUTES[offset] * 60_000);
       if (remindAt.getTime() > nowMs) {
-        entries.push({ remindAt, offset });
+        entries.push({ remindAt, anchorAt: new Date(at), offset });
       }
     }
   }
